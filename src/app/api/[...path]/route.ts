@@ -13,6 +13,12 @@ const HOP_BY_HOP_HEADERS = new Set([
   "transfer-encoding",
   "content-length",
   "host",
+  // A CDN/origem pode comprimir a resposta com um algoritmo (ex.: zstd) que o
+  // fetch do Node não sabe descomprimir. Não repassamos o Accept-Encoding do
+  // navegador para a origem, e não repassamos o Content-Encoding da origem
+  // de volta ao navegador, já que o corpo aqui já vem/sai sempre decodificado.
+  "accept-encoding",
+  "content-encoding",
 ]);
 
 async function proxy(request: NextRequest, path: string[]) {
