@@ -62,7 +62,12 @@ async function proxy(request: NextRequest, path: string[]) {
   // dados mudam a cada escrita e precisam refletir o estado atual do banco.
   responseHeaders.set("Cache-Control", "no-store, no-cache, must-revalidate");
 
-  return new NextResponse(response.body, {
+  // Lê o corpo inteiro antes de responder (em vez de repassar `response.body`
+  // como stream) — em algumas hospedagens o proxy/CDN na frente do Next.js
+  // corta o corpo de respostas em stream, devolvendo content-length: 0.
+  const bodyBuffer = await response.arrayBuffer();
+
+  return new NextResponse(bodyBuffer, {
     status: response.status,
     headers: responseHeaders,
   });
