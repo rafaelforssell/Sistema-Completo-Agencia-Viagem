@@ -73,7 +73,13 @@ async function proxy(request: NextRequest, path: string[]) {
   // corta o corpo de respostas em stream, devolvendo content-length: 0.
   const bodyBuffer = await response.arrayBuffer();
 
-  return new NextResponse(bodyBuffer, {
+  // Respostas com esses status não podem ter corpo (é inválido pela spec do
+  // fetch/Response) — passar um ArrayBuffer, mesmo vazio, faz o construtor
+  // do NextResponse lançar uma exceção e a rota inteira virar 500.
+  const NULL_BODY_STATUSES = new Set([204, 205, 304]);
+  const responseBody = NULL_BODY_STATUSES.has(response.status) ? null : bodyBuffer;
+
+  return new NextResponse(responseBody, {
     status: response.status,
     headers: responseHeaders,
   });
