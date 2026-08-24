@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Lexend } from "next/font/google";
 import "./globals.css";
+import { ChunkErrorReload } from "@/components/providers/chunk-error-reload";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -42,6 +43,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <Toaster position="top-right" richColors closeButton />
+            <ChunkErrorReload />
           </QueryProvider>
         </ThemeProvider>
       </body>
