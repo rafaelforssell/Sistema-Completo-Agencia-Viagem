@@ -13,7 +13,9 @@ type ViagemComRelacoes = Viagem & {
 
 function formatDate(date: Date | null | undefined): string {
   if (!date) return "—";
-  return new Intl.DateTimeFormat("pt-BR").format(date);
+  // Datas de calendário são armazenadas como meia-noite UTC — formatar em
+  // UTC evita que o fuso horário do servidor jogue o dia para trás.
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date);
 }
 
 function formatCurrency(value: unknown): string {

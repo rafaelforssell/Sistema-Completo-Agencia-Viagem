@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 import { useAtividades } from "@/hooks/use-dashboard";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import type { AtividadeFeed, TipoAtividade } from "@/types/entities";
 
 const TIPO_ICON: Record<TipoAtividade, LucideIcon> = {
@@ -24,6 +24,18 @@ const TIPO_ICON: Record<TipoAtividade, LucideIcon> = {
   cliente_novo: UserPlus,
   viagem_concluida: PlaneTakeoff,
 };
+
+// "cliente_novo" e "viagem_concluida" carregam um instante real (criadoEm /
+// atualizadoEm) — faz sentido mostrar a hora. Os demais carregam uma data de
+// calendário pura (dataIda, vencimento, dataSolicitacao): mostrar um horário
+// junto seria inventar uma informação que não existe.
+const TIPOS_COM_HORARIO = new Set<TipoAtividade>(["cliente_novo", "viagem_concluida"]);
+
+function formatAtividadeData(atividade: AtividadeFeed): string {
+  return TIPOS_COM_HORARIO.has(atividade.tipo)
+    ? formatDateTime(atividade.data)
+    : formatDate(atividade.data);
+}
 
 function hrefFor(atividade: AtividadeFeed): string | null {
   if (!atividade.referenciaId) return null;
@@ -58,7 +70,7 @@ export default function ResumoPage() {
                   <div className="pb-6">
                     <p className="text-sm font-medium">{atividade.titulo}</p>
                     <p className="text-sm text-muted-foreground">{atividade.descricao}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(atividade.data)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{formatAtividadeData(atividade)}</p>
                   </div>
                 );
 

@@ -78,7 +78,7 @@ export async function computeAlertas(): Promise<AlertaComputado[]> {
         tipo: "passaporte",
         severidade: dias < 0 ? "urgente" : dias <= 15 ? "urgente" : "atencao",
         titulo: dias < 0 ? "Passaporte vencido" : "Passaporte perto de vencer",
-        descricao: `${cliente.nome} — validade em ${new Intl.DateTimeFormat("pt-BR").format(cliente.validadePassaporte)}`,
+        descricao: `${cliente.nome} — validade em ${new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(cliente.validadePassaporte)}`,
         data: cliente.validadePassaporte.toISOString(),
         clienteId: cliente.id,
       });
@@ -100,7 +100,8 @@ export async function computeAlertas(): Promise<AlertaComputado[]> {
         severidade: dias < 0 ? "urgente" : dias <= 15 ? "urgente" : "atencao",
         titulo: dias < 0 ? "Passaporte vencido" : "Passaporte perto de vencer",
         descricao: `${passageiro.nome} (viagem ${passageiro.viagem.destino}) — validade em ${new Intl.DateTimeFormat(
-          "pt-BR"
+          "pt-BR",
+          { timeZone: "UTC" }
         ).format(passageiro.validadePassaporte)}`,
         data: passageiro.validadePassaporte.toISOString(),
         viagemId: passageiro.viagemId,
