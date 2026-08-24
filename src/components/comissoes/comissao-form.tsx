@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -119,7 +118,7 @@ export function ComissaoForm({ comissao, onSubmit, isSubmitting, onCancel }: Com
         <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
           Valor líquido estimado: <span className="font-medium text-foreground">{formatCurrency(valorLiquidoEstimado)}</span>
         </p>
-        <FormDescription>O valor líquido final é calculado e confirmado pelo servidor.</FormDescription>
+        <p className="text-xs text-muted-foreground">O valor líquido final é calculado e confirmado pelo servidor.</p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField

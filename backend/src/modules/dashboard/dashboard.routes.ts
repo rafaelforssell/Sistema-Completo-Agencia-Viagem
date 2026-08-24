@@ -5,7 +5,12 @@ import { HttpError } from "../../lib/http-error";
 import { asyncHandler } from "../../middleware/async-handler";
 import { toNumber } from "../../utils/decimal";
 import { addDays, diffInDays, nextAnniversary } from "../../utils/dates";
-import { computeAlertasComLeitura } from "./alertas.service";
+import {
+  computeAlertasComLeitura,
+  excluirAlerta,
+  marcarAlertaComoLido,
+  marcarTodosAlertasComoLidos,
+} from "./alertas.service";
 import { computeAtividades } from "./atividades.service";
 
 export const dashboardRouter = Router();
@@ -110,18 +115,30 @@ alertasRouter.get(
 );
 
 alertasRouter.patch(
+  "/lidos",
+  asyncHandler(async (_req, res) => {
+    await marcarTodosAlertasComoLidos();
+    res.json({ ok: true });
+  })
+);
+
+alertasRouter.patch(
   "/:id/lido",
   asyncHandler(async (req, res) => {
     const alertas = await computeAlertasComLeitura({});
     const alerta = alertas.find((a) => a.id === req.params.id);
     if (!alerta) throw HttpError.notFound("Alerta não encontrado.");
 
-    await prisma.alertaLido.upsert({
-      where: { chave: alerta.id },
-      create: { chave: alerta.id },
-      update: {},
-    });
+    await marcarAlertaComoLido(alerta.id);
 
     res.json({ ...alerta, lido: true });
+  })
+);
+
+alertasRouter.delete(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    await excluirAlerta(req.params.id);
+    res.status(204).send();
   })
 );

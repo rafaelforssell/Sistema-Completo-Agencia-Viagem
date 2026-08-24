@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, Check } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,7 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge, type StatusTone } from "@/components/common/status-badge";
-import { useAlertas, useMarcarAlertaLido } from "@/hooks/use-dashboard";
+import {
+  useAlertas,
+  useMarcarAlertaLido,
+  useMarcarTodosAlertasLidos,
+  useRemoverAlerta,
+} from "@/hooks/use-dashboard";
 import { SEVERIDADE_ALERTA_LABEL, TIPO_ALERTA_LABEL } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import type { SeveridadeAlerta } from "@/types/entities";
@@ -31,6 +36,10 @@ export default function AlertasPage() {
   const [tipo, setTipo] = useState("todos");
   const { data: alertas, isLoading } = useAlertas(tipo === "todos" ? undefined : { tipo });
   const marcarLido = useMarcarAlertaLido();
+  const marcarTodosLidos = useMarcarTodosAlertasLidos();
+  const removerAlerta = useRemoverAlerta();
+
+  const temNaoLidos = (alertas ?? []).some((alerta) => !alerta.lido);
 
   return (
     <div className="space-y-6">
@@ -38,19 +47,29 @@ export default function AlertasPage() {
         title="Alertas"
         description="Check-in aéreo, aniversários de clientes e passaportes vencendo."
         actions={
-          <Select value={tipo} onValueChange={setTipo}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os tipos</SelectItem>
-              {Object.entries(TIPO_ALERTA_LABEL).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <>
+            <Select value={tipo} onValueChange={setTipo}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
+                {Object.entries(TIPO_ALERTA_LABEL).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              disabled={!temNaoLidos || marcarTodosLidos.isPending}
+              onClick={() => marcarTodosLidos.mutate()}
+            >
+              <CheckCheck className="h-4 w-4" />
+              Marcar tudo como lido
+            </Button>
+          </>
         }
       />
 
@@ -106,6 +125,15 @@ export default function AlertasPage() {
                           <Check className="h-4 w-4" />
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => removerAlerta.mutate(alerta.id)}
+                        aria-label="Excluir alerta"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 );

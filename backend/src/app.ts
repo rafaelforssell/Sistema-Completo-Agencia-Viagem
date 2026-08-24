@@ -12,6 +12,7 @@ import { contasRouter } from "./modules/contas/contas.routes";
 import { comissoesRouter } from "./modules/comissoes/comissoes.routes";
 import { anexosRouter } from "./modules/anexos/anexos.routes";
 import { dashboardRouter, atividadesRouter, alertasRouter } from "./modules/dashboard/dashboard.routes";
+import { fornecedoresRouter } from "./modules/fornecedores/fornecedores.routes";
 
 export const app = express();
 
@@ -45,6 +46,7 @@ api.use("/pagamentos", requireAuth, pagamentosRouter);
 api.use("/reembolsos", requireAuth, reembolsosRouter);
 api.use("/contas", requireAuth, contasRouter);
 api.use("/comissoes", requireAuth, comissoesRouter);
+api.use("/fornecedores", requireAuth, fornecedoresRouter);
 api.use("/anexos", requireAuth, anexosRouter);
 api.use("/dashboard", requireAuth, dashboardRouter);
 api.use("/atividades", requireAuth, atividadesRouter);

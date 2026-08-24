@@ -9,6 +9,7 @@ import type {
   TipoAlerta,
   TipoCartao,
   TipoDocumento,
+  TipoFornecedor,
 } from "@/types/entities";
 
 export const STATUS_VIAGEM_LABEL: Record<StatusViagem, string> = {
@@ -94,6 +95,18 @@ export const TIPO_DOCUMENTO_LABEL: Record<TipoDocumento, string> = {
 
 export const TIPO_DOCUMENTO_OPTIONS = Object.entries(TIPO_DOCUMENTO_LABEL).map(
   ([value, label]) => ({ value: value as TipoDocumento, label })
+);
+
+export const TIPO_FORNECEDOR_LABEL: Record<TipoFornecedor, string> = {
+  companhia_aerea: "Companhia aérea",
+  hotel: "Hotel",
+  operadora: "Operadora",
+  seguradora: "Seguradora",
+  outro: "Outro",
+};
+
+export const TIPO_FORNECEDOR_OPTIONS = Object.entries(TIPO_FORNECEDOR_LABEL).map(
+  ([value, label]) => ({ value: value as TipoFornecedor, label })
 );
 
 export const TIPO_ALERTA_LABEL: Record<TipoAlerta, string> = {

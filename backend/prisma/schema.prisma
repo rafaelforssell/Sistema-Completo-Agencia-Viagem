@@ -232,12 +232,16 @@ model Anexo {
   @@map("anexos")
 }
 
-// Estado de leitura de alertas sintéticos (check-in, aniversário, passaporte),
-// que são calculados em tempo real a partir de Cliente/Viagem — não persistidos
-// como entidade própria. A chave é um id determinístico (ex.: "passaporte:<clienteId>").
+// Estado (lido/excluído) de alertas sintéticos (check-in, aniversário,
+// passaporte), que são calculados em tempo real a partir de Cliente/Viagem —
+// não persistidos como entidade própria. A chave é um id determinístico
+// (ex.: "passaporte:<clienteId>").
 model AlertaLido {
-  chave  String   @id
-  lidoEm DateTime @default(now())
+  chave      String    @id
+  lido       Boolean   @default(false)
+  lidoEm     DateTime?
+  excluido   Boolean   @default(false)
+  excluidoEm DateTime?
 
   @@map("alertas_lidos")
 }
@@ -249,4 +253,25 @@ model Voucher {
   geradoEm DateTime @default(now())
 
   @@map("vouchers")
+}
+
+enum TipoFornecedor {
+  companhia_aerea
+  hotel
+  operadora
+  seguradora
+  outro
+}
+
+model Fornecedor {
+  id           String         @id @default(uuid())
+  nome         String
+  tipo         TipoFornecedor @default(outro)
+  email        String?
+  telefone     String?
+  observacoes  String?
+  criadoEm     DateTime       @default(now())
+  atualizadoEm DateTime       @updatedAt
+
+  @@map("fornecedores")
 }

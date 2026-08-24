@@ -41,10 +41,33 @@ passageirosRouter.get(
   })
 );
 
+// Garante que todo passageiro também exista como Cliente cadastrado (para
+// aparecer na aba Clientes). Evita duplicar: se já existir um cliente com o
+// mesmo número de passaporte, ou com o mesmo nome (sem diferenciar
+// maiúsculas/minúsculas), reaproveita esse cadastro em vez de criar outro.
+async function garantirClienteParaPassageiro(input: z.infer<typeof passageiroSchema>) {
+  const existente = input.numeroPassaporte
+    ? await prisma.cliente.findFirst({ where: { numeroPassaporte: input.numeroPassaporte } })
+    : await prisma.cliente.findFirst({ where: { nome: { equals: input.nome, mode: "insensitive" } } });
+
+  if (existente) return existente;
+
+  return prisma.cliente.create({
+    data: {
+      nome: input.nome,
+      dataNascimento: input.dataNascimento ? new Date(input.dataNascimento) : null,
+      numeroPassaporte: input.numeroPassaporte || null,
+      validadePassaporte: input.validadePassaporte ? new Date(input.validadePassaporte) : null,
+    },
+  });
+}
+
 passageirosRouter.post(
   "/",
   asyncHandler(async (req, res) => {
     const input = passageiroSchema.parse(req.body);
+    await garantirClienteParaPassageiro(input);
+
     const passageiro = await prisma.passageiro.create({
       data: {
         viagemId: req.params.viagemId,

@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Activity,
   Bell,
+  Building2,
   LayoutDashboard,
   Percent,
   Plane,
@@ -23,6 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reembolsos", label: "Reembolsos", icon: RefreshCcw },
   { href: "/contas", label: "Contas", icon: Wallet },
   { href: "/comissoes", label: "Comissões", icon: Percent },
+  { href: "/fornecedores", label: "Fornecedores", icon: Building2 },
   { href: "/resumo", label: "Resumo", icon: Activity },
   { href: "/alertas", label: "Alertas", icon: Bell },
 ];

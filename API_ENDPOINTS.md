@@ -76,6 +76,12 @@ Campos: `clienteId`, `destino`, `dataIda`, `dataVolta`, `companhiaAerea?`,
 Campos: `nome`, `parentesco?`, `dataNascimento?`, `numeroPassaporte?`,
 `validadePassaporte?`, `numeroBilhete?`.
 
+**Efeito colateral em `POST`**: todo passageiro criado também gera (ou
+reaproveita) um registro em `Cliente` com os mesmos dados pessoais — assim
+qualquer membro de família cadastrado em uma viagem também aparece na
+listagem de clientes. A busca de reaproveitamento usa `numeroPassaporte`
+quando informado, senão `nome` (case-insensitive).
+
 ## Pagamentos
 
 | Método | Rota | Descrição |
@@ -147,11 +153,25 @@ storage assinado) e `tamanhoBytes`, `mimeType`, `nomeArquivo`.
 |---|---|---|
 | GET | `/dashboard/metricas` | `{ totalClientes, viagensAtivas, proximosCheckIns, aniversariantesSemana, passaportesVencendoEm30Dias, contasAPagar, contasAReceber }`. |
 | GET | `/atividades?limite=20` | Feed cronológico (mais recente primeiro) de eventos: viagens próximas, pagamentos pendentes, reembolsos em aberto, clientes novos, viagens concluídas. |
-| GET | `/alertas` | Filtros: `lido` (boolean), `tipo` (`checkin` \| `aniversario` \| `passaporte`). |
-| PATCH | `/alertas/:id/lido` | Marca o alerta como lido. |
+| GET | `/alertas` | Filtros: `lido` (boolean), `tipo` (`checkin` \| `aniversario` \| `passaporte`). Nunca inclui alertas excluídos. |
+| PATCH | `/alertas/:id/lido` | Marca um alerta como lido. |
+| PATCH | `/alertas/lidos` | Marca **todos** os alertas pendentes como lidos. |
+| DELETE | `/alertas/:id` | Descarta o alerta (não volta a aparecer, mesmo que a condição que o gerou continue verdadeira). |
 
 `Alerta` inclui `severidade` (`info` \| `atencao` \| `urgente`), `titulo`, `descricao`,
 `data`, e opcionalmente `clienteId`/`viagemId` para navegação.
+
+## Fornecedores
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/fornecedores` | Lista paginada. Filtros: `busca`, `tipo`. |
+| POST | `/fornecedores` | Cria fornecedor. |
+| PUT | `/fornecedores/:id` | Atualiza fornecedor. |
+| DELETE | `/fornecedores/:id` | Remove fornecedor. |
+
+Campos: `nome`, `tipo` (`companhia_aerea` \| `hotel` \| `operadora` \| `seguradora` \| `outro`),
+`email?`, `telefone?`, `observacoes?`.
 
 ---
 

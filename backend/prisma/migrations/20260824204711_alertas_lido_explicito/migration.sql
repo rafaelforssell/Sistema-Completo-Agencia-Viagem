@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "alertas_lidos" ADD COLUMN     "lido" BOOLEAN NOT NULL DEFAULT false,
+ALTER COLUMN "lidoEm" DROP NOT NULL,
+ALTER COLUMN "lidoEm" DROP DEFAULT;

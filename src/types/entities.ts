@@ -214,6 +214,21 @@ export type ComissaoInput = Omit<
   "id" | "criadoEm" | "atualizadoEm" | "valorLiquido"
 >;
 
+// ---------- Fornecedores ----------
+
+export type TipoFornecedor = "companhia_aerea" | "hotel" | "operadora" | "seguradora" | "outro";
+
+export interface Fornecedor extends Timestamps {
+  id: ID;
+  nome: string;
+  tipo: TipoFornecedor;
+  email?: string;
+  telefone?: string;
+  observacoes?: string;
+}
+
+export type FornecedorInput = Omit<Fornecedor, "id" | "criadoEm" | "atualizadoEm">;
+
 // ---------- Dashboard / Resumo / Alertas ----------
 
 export interface DashboardMetricas {

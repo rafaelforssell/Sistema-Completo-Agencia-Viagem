@@ -113,11 +113,42 @@ export async function computeAlertas(): Promise<AlertaComputado[]> {
 }
 
 export async function computeAlertasComLeitura(filtros: { lido?: boolean; tipo?: TipoAlerta }) {
-  const [alertas, lidos] = await Promise.all([computeAlertas(), prisma.alertaLido.findMany()]);
-  const lidosSet = new Set(lidos.map((l) => l.chave));
+  const [alertas, estados] = await Promise.all([computeAlertas(), prisma.alertaLido.findMany()]);
+  const lidosSet = new Set(estados.filter((e) => e.lido).map((e) => e.chave));
+  const excluidosSet = new Set(estados.filter((e) => e.excluido).map((e) => e.chave));
 
   return alertas
+    .filter((alerta) => !excluidosSet.has(alerta.id))
     .map((alerta) => ({ ...alerta, lido: lidosSet.has(alerta.id) }))
     .filter((alerta) => (filtros.tipo ? alerta.tipo === filtros.tipo : true))
     .filter((alerta) => (filtros.lido !== undefined ? alerta.lido === filtros.lido : true));
+}
+
+export async function marcarAlertaComoLido(id: string) {
+  await prisma.alertaLido.upsert({
+    where: { chave: id },
+    create: { chave: id, lido: true, lidoEm: new Date() },
+    update: { lido: true, lidoEm: new Date() },
+  });
+}
+
+export async function marcarTodosAlertasComoLidos() {
+  const alertas = await computeAlertasComLeitura({ lido: false });
+  await prisma.$transaction(
+    alertas.map((alerta) =>
+      prisma.alertaLido.upsert({
+        where: { chave: alerta.id },
+        create: { chave: alerta.id, lido: true, lidoEm: new Date() },
+        update: { lido: true, lidoEm: new Date() },
+      })
+    )
+  );
+}
+
+export async function excluirAlerta(id: string) {
+  await prisma.alertaLido.upsert({
+    where: { chave: id },
+    create: { chave: id, excluido: true, excluidoEm: new Date() },
+    update: { excluido: true, excluidoEm: new Date() },
+  });
 }
