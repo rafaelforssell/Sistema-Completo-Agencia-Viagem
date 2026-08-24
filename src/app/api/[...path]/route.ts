@@ -58,6 +58,10 @@ async function proxy(request: NextRequest, path: string[]) {
     responseHeaders.set("x-session-expired", "1");
   }
 
+  // Evita que CDN/proxy/navegador guarde em cache respostas da API — os
+  // dados mudam a cada escrita e precisam refletir o estado atual do banco.
+  responseHeaders.set("Cache-Control", "no-store, no-cache, must-revalidate");
+
   return new NextResponse(response.body, {
     status: response.status,
     headers: responseHeaders,

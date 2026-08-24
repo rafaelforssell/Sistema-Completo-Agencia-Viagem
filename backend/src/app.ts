@@ -26,6 +26,13 @@ app.use("/uploads", express.static(env.uploadsDir));
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
+// Nunca deixa CDN/proxy/navegador colocar em cache respostas da API — os
+// dados mudam a cada escrita e precisam refletir o estado atual do banco.
+app.use((_req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  next();
+});
+
 // Todas as rotas do contrato vivem sob /api, pois é isso que o frontend
 // espera por padrão em API_BASE_URL (ver API_ENDPOINTS.md e .env.example).
 const api = express.Router();

@@ -19,5 +19,7 @@ export async function GET() {
   }
 
   const data = await upstream.json();
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+  });
 }
