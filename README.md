@@ -1,11 +1,21 @@
-# Sistema Agência de Viagem — Frontend
+# Sistema Agência de Viagem
 
-Frontend do sistema interno de gestão (CRM + financeiro + operacional) de uma
-agência de viagens, para uso de um único administrador. Centraliza clientes,
-viagens, pagamentos, reembolsos, contas, comissionamento, documentos e
-vouchers.
+Sistema interno de gestão (CRM + financeiro + operacional) de uma agência de
+viagens, para uso de um único administrador. Centraliza clientes, viagens,
+pagamentos, reembolsos, contas, comissionamento, documentos e vouchers.
 
-## Stack
+Este repositório é um monorepo com duas partes:
+
+- **Frontend** (raiz do repositório, documentado abaixo) — Next.js.
+- **[Backend](backend/README.md)** (pasta `backend/`) — API REST em
+  Node.js/Express + Prisma/PostgreSQL. Tem seu próprio `package.json` e é
+  implantado como uma aplicação Node.js separada.
+
+O contrato entre os dois está documentado em [`API_ENDPOINTS.md`](API_ENDPOINTS.md).
+
+## Frontend
+
+### Stack
 
 - **Next.js 15** (App Router) + **React 18** + **TypeScript**
 - **Tailwind CSS v3** + **shadcn/ui** (Radix, estilo `new-york`)
@@ -20,7 +30,7 @@ chamadas passam por um proxy autenticado em `src/app/api/[...path]/route.ts`
 token nunca fica acessível ao JavaScript do cliente. O contrato de endpoints
 assumido está documentado em [`API_ENDPOINTS.md`](API_ENDPOINTS.md).
 
-## Estrutura de pastas
+### Estrutura de pastas
 
 ```
 src/
@@ -55,7 +65,7 @@ src/
   middleware.ts             # protege rotas quando não há sessão válida
 ```
 
-## Rodando localmente
+### Rodando localmente
 
 Pré-requisitos: Node.js 18.18+ (recomendado 20 LTS) e um backend rodando a
 API descrita em `API_ENDPOINTS.md`.
@@ -80,7 +90,7 @@ frontend trata o erro sem quebrar a tela.
 Essas variáveis são usadas **apenas no servidor** (route handlers e
 middleware) — nunca são expostas ao bundle do browser.
 
-## Build de produção
+### Build de produção
 
 ```bash
 npm run build
@@ -91,7 +101,7 @@ npm run start   # serve o build em produção (porta 3000 por padrão)
 um servidor Node.js autocontido (com apenas as dependências necessárias),
 ideal para hospedagens com espaço/processo limitado como a Hostinger.
 
-## Deploy na Hostinger (Node.js Hosting / VPS)
+### Deploy na Hostinger (Node.js Hosting / VPS)
 
 1. **Build local ou em CI**, gerando a pasta `.next/standalone`:
    ```bash
@@ -125,7 +135,7 @@ Este projeto **não** usa `next export` / build estático — o middleware
 runtime Node.js ativo, por isso a hospedagem Node.js da Hostinger (ou um VPS)
 é o alvo correto, não hospedagem puramente estática.
 
-## Scripts
+### Scripts
 
 | Comando | Descrição |
 |---|---|
@@ -133,3 +143,9 @@ runtime Node.js ativo, por isso a hospedagem Node.js da Hostinger (ou um VPS)
 | `npm run build` | Build de produção (`output: standalone`) |
 | `npm run start` | Serve o build de produção |
 | `npm run lint` | ESLint |
+
+## Backend
+
+Ver [`backend/README.md`](backend/README.md) — setup local, variáveis de
+ambiente, banco de dados (PostgreSQL — atenção à observação sobre a
+Hostinger no README do backend) e deploy.

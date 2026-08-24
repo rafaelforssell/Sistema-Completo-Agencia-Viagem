@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model Cliente {
+  id                  String    @id @default(uuid())
+  nome                String
+  email               String?
+  telefone            String?
+  dataNascimento      DateTime?
+  numeroPassaporte    String?
+  validadePassaporte  DateTime?
+  observacoes         String?
+  criadoEm            DateTime  @default(now())
+  atualizadoEm        DateTime  @updatedAt
+
+  viagens             Viagem[]
+  anexos              Anexo[]
+
+  @@map("clientes")
+}
+
+enum StatusViagem {
+  orcamento
+  confirmada
+  em_andamento
+  concluida
+  cancelada
+}
+
+model Viagem {
+  id             String       @id @default(uuid())
+  clienteId      String
+  destino        String
+  dataIda        DateTime
+  dataVolta      DateTime
+  companhiaAerea String?
+  status         StatusViagem @default(orcamento)
+  observacoes    String?
+  criadoEm       DateTime     @default(now())
+  atualizadoEm   DateTime     @updatedAt
+
+  cliente     Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  passageiros Passageiro[]
+  pagamentos  Pagamento[]
+  reembolsos  Reembolso[]
+  comissoes   Comissao[]
+  contas      ContaFinanceira[]
+  anexos      Anexo[]
+
+  @@map("viagens")
+}
+
+model Passageiro {
+  id                 String    @id @default(uuid())
+  viagemId           String
+  nome               String
+  parentesco         String?
+  dataNascimento     DateTime?
+  numeroPassaporte   String?
+  validadePassaporte DateTime?
+  numeroBilhete      String?
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+
+  viagem Viagem  @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  anexos Anexo[]
+
+  @@map("passageiros")
+}
+
+enum FormaPagamento {
+  cartao_credito
+  cartao_debito
+  pix
+  boleto
+  transferencia
+  dinheiro
+}
+
+enum TipoCartao {
+  agencia
+  cliente
+  terceiro
+}
+
+model Pagamento {
+  id                  String         @id @default(uuid())
+  viagemId            String
+  companhiaAerea      String?
+  fornecedor          String
+  formaPagamento      FormaPagamento
+  tipoCartao          TipoCartao
+  nomeTitularTerceiro String?
+  valor               Decimal        @db.Decimal(12, 2)
+  parcelas            Int            @default(1)
+  dataPagamento       DateTime
+  observacoes         String?
+  criadoEm            DateTime       @default(now())
+  atualizadoEm        DateTime       @updatedAt
+
+  viagem     Viagem      @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  reembolsos Reembolso[]
+
+  @@map("pagamentos")
+}
+
+enum StatusReembolso {
+  solicitado
+  em_analise
+  aprovado
+  pago
+  negado
+}
+
+model Reembolso {
+  id               String           @id @default(uuid())
+  viagemId         String
+  pagamentoId      String?
+  motivo           String
+  valorSolicitado  Decimal          @db.Decimal(12, 2)
+  valorAprovado    Decimal?         @db.Decimal(12, 2)
+  status           StatusReembolso  @default(solicitado)
+  dataSolicitacao  DateTime
+  dataConclusao    DateTime?
+  observacoes      String?
+  criadoEm         DateTime         @default(now())
+  atualizadoEm     DateTime         @updatedAt
+
+  viagem    Viagem     @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  pagamento Pagamento? @relation(fields: [pagamentoId], references: [id], onDelete: SetNull)
+
+  @@map("reembolsos")
+}
+
+enum NaturezaConta {
+  a_pagar
+  a_receber
+}
+
+enum StatusConta {
+  pendente
+  pago
+  atrasado
+  cancelado
+}
+
+model ContaFinanceira {
+  id         String        @id @default(uuid())
+  natureza   NaturezaConta
+  descricao  String
+  origem     String
+  origemNome String
+  viagemId   String?
+  valor      Decimal       @db.Decimal(12, 2)
+  vencimento DateTime
+  status     StatusConta   @default(pendente)
+  fonte      String?
+  criadoEm   DateTime      @default(now())
+  atualizadoEm DateTime    @updatedAt
+
+  viagem Viagem? @relation(fields: [viagemId], references: [id], onDelete: SetNull)
+
+  @@map("contas_financeiras")
+}
+
+enum StatusComissao {
+  pendente
+  recebida
+  cancelada
+}
+
+model Comissao {
+  id              String         @id @default(uuid())
+  viagemId        String
+  fornecedor      String
+  percentual      Decimal        @db.Decimal(5, 2)
+  valorBruto      Decimal        @db.Decimal(12, 2)
+  valorLiquido    Decimal        @db.Decimal(12, 2)
+  status          StatusComissao @default(pendente)
+  dataPrevista    DateTime?
+  dataRecebimento DateTime?
+  criadoEm        DateTime       @default(now())
+  atualizadoEm    DateTime       @updatedAt
+
+  viagem Viagem @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+
+  @@map("comissoes")
+}
+
+enum TipoDocumento {
+  passaporte
+  rg
+  cpf
+  visto
+  outro
+}
+
+model Anexo {
+  id             String        @id @default(uuid())
+  tipo           TipoDocumento
+  nomeArquivo    String
+  caminhoArquivo String
+  mimeType       String
+  tamanhoBytes   Int
+  clienteId      String?
+  viagemId       String?
+  passageiroId   String?
+  criadoEm       DateTime      @default(now())
+  atualizadoEm   DateTime      @updatedAt
+
+  cliente    Cliente?    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  viagem     Viagem?     @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  passageiro Passageiro? @relation(fields: [passageiroId], references: [id], onDelete: Cascade)
+
+  @@map("anexos")
+}
+
+// Estado de leitura de alertas sintéticos (check-in, aniversário, passaporte),
+// que são calculados em tempo real a partir de Cliente/Viagem — não persistidos
+// como entidade própria. A chave é um id determinístico (ex.: "passaporte:<clienteId>").
+model AlertaLido {
+  chave  String   @id
+  lidoEm DateTime @default(now())
+
+  @@map("alertas_lidos")
+}
+
+model Voucher {
+  id       String   @id @default(uuid())
+  viagemId String   @unique
+  url      String
+  geradoEm DateTime @default(now())
+
+  @@map("vouchers")
+}
