@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ClienteCombobox } from "@/components/clientes/cliente-combobox";
+import { ViagemCombobox } from "@/components/viagens/viagem-combobox";
 import {
   Form,
   FormControl,
@@ -40,12 +42,15 @@ export function ContaForm({ conta, onSubmit, isSubmitting, onCancel }: ContaForm
       origem: conta?.origem ?? "cliente",
       origemNome: conta?.origemNome ?? "",
       viagemId: conta?.viagemId ?? "",
+      clienteId: conta?.clienteId ?? "",
       valor: conta?.valor ?? 0,
       vencimento: conta?.vencimento?.slice(0, 10) ?? "",
       status: conta?.status ?? "pendente",
       fonte: conta?.fonte ?? "",
     },
   });
+
+  const origem = form.watch("origem");
 
   return (
     <Form {...form}>
@@ -81,7 +86,16 @@ export function ContaForm({ conta, onSubmit, isSubmitting, onCancel }: ContaForm
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Origem</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    if (value === "fornecedor") {
+                      form.setValue("clienteId", "");
+                      form.setValue("origemNome", "");
+                    }
+                  }}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue />
@@ -112,14 +126,50 @@ export function ContaForm({ conta, onSubmit, isSubmitting, onCancel }: ContaForm
           )}
         />
 
+        {origem === "cliente" ? (
+          <FormField
+            control={form.control}
+            name="clienteId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cliente</FormLabel>
+                <FormControl>
+                  <ClienteCombobox
+                    value={field.value}
+                    onChange={(id, nome) => {
+                      field.onChange(id);
+                      form.setValue("origemNome", nome, { shouldValidate: true });
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          <FormField
+            control={form.control}
+            name="origemNome"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome do fornecedor</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
-          name="origemNome"
+          name="viagemId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nome do cliente/fornecedor</FormLabel>
+              <FormLabel>Viagem vinculada (opcional)</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <ViagemCombobox value={field.value} onChange={field.onChange} placeholder="Nenhuma viagem vinculada" />
               </FormControl>
               <FormMessage />
             </FormItem>

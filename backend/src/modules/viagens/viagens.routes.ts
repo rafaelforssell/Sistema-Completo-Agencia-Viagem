@@ -7,7 +7,7 @@ import { asyncHandler } from "../../middleware/async-handler";
 import { parsePagination, paginatedResponse } from "../../utils/pagination";
 import { serializeCliente } from "../clientes/clientes.routes";
 import { serializeAnexo } from "../anexos/anexos.routes";
-import { serializePagamento, pagamentoSchema } from "../pagamentos/pagamentos.routes";
+import { serializePagamento, pagamentoSchema, sincronizarContaDoPagamento } from "../pagamentos/pagamentos.routes";
 import { serializeReembolso, reembolsoSchema, reembolsoToData } from "../reembolsos/reembolsos.routes";
 import { passageirosRouter } from "./passageiros.routes";
 import { generateVoucherPdf, voucherUrl } from "./voucher.service";
@@ -181,6 +181,12 @@ viagensRouter.post(
   "/:viagemId/pagamentos",
   asyncHandler(async (req, res) => {
     const input = pagamentoSchema.parse(req.body);
+    const viagem = await prisma.viagem.findUnique({
+      where: { id: req.params.viagemId },
+      include: { cliente: true },
+    });
+    if (!viagem) throw HttpError.notFound("Viagem não encontrada.");
+
     const pagamento = await prisma.pagamento.create({
       data: {
         viagemId: req.params.viagemId,
@@ -195,6 +201,7 @@ viagensRouter.post(
         observacoes: input.observacoes || null,
       },
     });
+    await sincronizarContaDoPagamento(pagamento, viagem);
     res.status(201).json(serializePagamento(pagamento));
   })
 );

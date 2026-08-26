@@ -180,6 +180,8 @@ export interface ContaFinanceira extends Timestamps {
   origem: "cliente" | "fornecedor";
   origemNome: string;
   viagemId?: ID;
+  clienteId?: ID;
+  cliente?: Cliente;
   valor: number;
   vencimento: string;
   status: StatusConta;

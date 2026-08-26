@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { passageirosApi, viagensApi, ViagensFiltro } from "@/lib/api/viagens";
+import { clientesKeys } from "@/hooks/use-clientes";
 import { ApiError } from "@/lib/http";
 import type { PassageiroInput, ViagemInput } from "@/types/entities";
 
@@ -75,7 +76,12 @@ export function useCriarPassageiro(viagemId: string) {
   return useMutation({
     mutationFn: (input: PassageiroInput) => passageirosApi.criar(viagemId, input),
     onSuccess: () => {
+      // Adicionar um passageiro pode criar um Cliente novo no backend
+      // (ver garantirClienteParaPassageiro) — sem isso a aba Clientes fica
+      // com dado desatualizado até um reload manual.
       queryClient.invalidateQueries({ queryKey: viagensKeys.detalhe(viagemId) });
+      queryClient.invalidateQueries({ queryKey: clientesKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "metricas"] });
       toast.success("Passageiro adicionado.");
     },
     onError: (error: ApiError) => toast.error(error.message),

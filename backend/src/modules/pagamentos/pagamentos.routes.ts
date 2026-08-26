@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import type { Pagamento, Prisma } from "@prisma/client";
+import type { Cliente, Pagamento, Prisma, Viagem } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { asyncHandler } from "../../middleware/async-handler";
 import { toNumber } from "../../utils/decimal";
@@ -67,6 +67,46 @@ export function serializePagamento(pagamento: Pagamento) {
   };
 }
 
+// Quando um pagamento é feito no cartão da própria agência, a agência
+// adiantou o valor e o cliente precisa repassar — isso gera automaticamente
+// uma conta "a receber" vinculada ao pagamento (ver
+// AskUserQuestion/decisão do usuário: só tipoCartao "agencia" gera conta;
+// "cliente" e "terceiro" não, pois não há dívida a cobrar). O vínculo por
+// pagamentoId (unique + onDelete: Cascade) mantém a conta em sincronia e a
+// remove automaticamente se o pagamento for excluído.
+async function sincronizarContaDoPagamento(pagamento: Pagamento, viagem: Viagem & { cliente: Cliente }) {
+  if (pagamento.tipoCartao !== "agencia") {
+    await prisma.contaFinanceira.deleteMany({ where: { pagamentoId: pagamento.id } });
+    return;
+  }
+
+  const descricao = `Repasse do cliente — pagamento a ${pagamento.fornecedor} (${viagem.destino})`;
+
+  await prisma.contaFinanceira.upsert({
+    where: { pagamentoId: pagamento.id },
+    create: {
+      natureza: "a_receber",
+      descricao,
+      origem: "cliente",
+      origemNome: viagem.cliente.nome,
+      clienteId: viagem.clienteId,
+      viagemId: viagem.id,
+      pagamentoId: pagamento.id,
+      valor: pagamento.valor,
+      vencimento: pagamento.dataPagamento,
+      status: "pendente",
+      fonte: "Cartão Agência",
+    },
+    update: {
+      descricao,
+      origemNome: viagem.cliente.nome,
+      clienteId: viagem.clienteId,
+      valor: pagamento.valor,
+      vencimento: pagamento.dataPagamento,
+    },
+  });
+}
+
 export const pagamentosRouter = Router();
 
 pagamentosRouter.put(
@@ -86,7 +126,12 @@ pagamentosRouter.put(
     if (input.dataPagamento !== undefined) data.dataPagamento = new Date(input.dataPagamento);
     if (input.observacoes !== undefined) data.observacoes = input.observacoes || null;
 
-    const pagamento = await prisma.pagamento.update({ where: { id: req.params.id }, data });
+    const pagamento = await prisma.pagamento.update({
+      where: { id: req.params.id },
+      data,
+      include: { viagem: { include: { cliente: true } } },
+    });
+    await sincronizarContaDoPagamento(pagamento, pagamento.viagem);
     res.json(serializePagamento(pagamento));
   })
 );
@@ -99,4 +144,4 @@ pagamentosRouter.delete(
   })
 );
 
-export { toData as pagamentoToData };
+export { toData as pagamentoToData, sincronizarContaDoPagamento };

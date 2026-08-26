@@ -13,7 +13,7 @@ export interface ContasFiltro extends PaginationParams {
 
 export type ContaInput = Omit<
   ContaFinanceira,
-  "id" | "criadoEm" | "atualizadoEm"
+  "id" | "criadoEm" | "atualizadoEm" | "cliente"
 >;
 
 export const contasApi = {

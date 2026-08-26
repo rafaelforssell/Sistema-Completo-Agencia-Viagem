@@ -32,6 +32,7 @@ model Cliente {
 
   viagens             Viagem[]
   anexos              Anexo[]
+  contas              ContaFinanceira[]
 
   @@map("clientes")
 }
@@ -115,8 +116,9 @@ model Pagamento {
   criadoEm            DateTime       @default(now())
   atualizadoEm        DateTime       @updatedAt
 
-  viagem     Viagem      @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+  viagem     Viagem            @relation(fields: [viagemId], references: [id], onDelete: Cascade)
   reembolsos Reembolso[]
+  conta      ContaFinanceira?
 
   @@map("pagamentos")
 }
@@ -168,6 +170,8 @@ model ContaFinanceira {
   origem     String
   origemNome String
   viagemId   String?
+  clienteId  String?
+  pagamentoId String?      @unique
   valor      Decimal       @db.Decimal(12, 2)
   vencimento DateTime
   status     StatusConta   @default(pendente)
@@ -175,7 +179,9 @@ model ContaFinanceira {
   criadoEm   DateTime      @default(now())
   atualizadoEm DateTime    @updatedAt
 
-  viagem Viagem? @relation(fields: [viagemId], references: [id], onDelete: SetNull)
+  viagem    Viagem?    @relation(fields: [viagemId], references: [id], onDelete: SetNull)
+  cliente   Cliente?   @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  pagamento Pagamento? @relation(fields: [pagamentoId], references: [id], onDelete: Cascade)
 
   @@map("contas_financeiras")
 }

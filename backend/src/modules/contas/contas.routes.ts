@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
-import type { ContaFinanceira, NaturezaConta, Prisma, StatusConta } from "@prisma/client";
+import type { Cliente, ContaFinanceira, NaturezaConta, Prisma, StatusConta } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { asyncHandler } from "../../middleware/async-handler";
 import { parsePagination, paginatedResponse } from "../../utils/pagination";
 import { toNumber } from "../../utils/decimal";
+import { serializeCliente } from "../clientes/clientes.routes";
 
 const contaSchema = z.object({
   natureza: z.enum(["a_pagar", "a_receber"]),
@@ -12,6 +13,7 @@ const contaSchema = z.object({
   origem: z.enum(["cliente", "fornecedor"]),
   origemNome: z.string().min(2),
   viagemId: z.string().uuid().optional().or(z.literal("")),
+  clienteId: z.string().uuid().optional().or(z.literal("")),
   valor: z.number().positive(),
   vencimento: z.string().min(1),
   status: z.enum(["pendente", "pago", "atrasado", "cancelado"]),
@@ -25,6 +27,7 @@ function toData(input: z.infer<typeof contaSchema>) {
     origem: input.origem,
     origemNome: input.origemNome,
     viagemId: input.viagemId || null,
+    clienteId: input.clienteId || null,
     valor: input.valor,
     vencimento: new Date(input.vencimento),
     status: input.status,
@@ -32,7 +35,7 @@ function toData(input: z.infer<typeof contaSchema>) {
   };
 }
 
-export function serializeConta(conta: ContaFinanceira) {
+export function serializeConta(conta: ContaFinanceira & { cliente?: Cliente | null }) {
   return {
     id: conta.id,
     natureza: conta.natureza,
@@ -40,6 +43,8 @@ export function serializeConta(conta: ContaFinanceira) {
     origem: conta.origem,
     origemNome: conta.origemNome,
     viagemId: conta.viagemId ?? undefined,
+    clienteId: conta.clienteId ?? undefined,
+    cliente: conta.cliente ? serializeCliente(conta.cliente) : undefined,
     valor: toNumber(conta.valor),
     vencimento: conta.vencimento.toISOString(),
     status: conta.status,
@@ -75,6 +80,7 @@ contasRouter.get(
         skip: pagination.skip,
         take: pagination.take,
         orderBy: { [pagination.ordenarPor ?? "criadoEm"]: pagination.ordem },
+        include: { cliente: true },
       }),
       prisma.contaFinanceira.count({ where }),
     ]);
@@ -122,7 +128,10 @@ contasRouter.post(
   "/",
   asyncHandler(async (req, res) => {
     const input = contaSchema.parse(req.body);
-    const conta = await prisma.contaFinanceira.create({ data: toData(input) });
+    const conta = await prisma.contaFinanceira.create({
+      data: toData(input),
+      include: { cliente: true },
+    });
     res.status(201).json(serializeConta(conta));
   })
 );
@@ -139,12 +148,19 @@ contasRouter.put(
     if (input.viagemId !== undefined) {
       data.viagem = input.viagemId ? { connect: { id: input.viagemId } } : { disconnect: true };
     }
+    if (input.clienteId !== undefined) {
+      data.cliente = input.clienteId ? { connect: { id: input.clienteId } } : { disconnect: true };
+    }
     if (input.valor !== undefined) data.valor = input.valor;
     if (input.vencimento !== undefined) data.vencimento = new Date(input.vencimento);
     if (input.status !== undefined) data.status = input.status;
     if (input.fonte !== undefined) data.fonte = input.fonte || null;
 
-    const conta = await prisma.contaFinanceira.update({ where: { id: req.params.id }, data });
+    const conta = await prisma.contaFinanceira.update({
+      where: { id: req.params.id },
+      data,
+      include: { cliente: true },
+    });
     res.json(serializeConta(conta));
   })
 );
