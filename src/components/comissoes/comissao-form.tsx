@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Select,
   SelectContent,
@@ -94,7 +95,7 @@ export function ComissaoForm({ comissao, onSubmit, isSubmitting, onCancel }: Com
               <FormItem>
                 <FormLabel>Valor bruto</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" min="0" {...field} />
+                  <CurrencyInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

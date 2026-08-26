@@ -49,6 +49,7 @@ export function serializeConta(conta: ContaFinanceira & { cliente?: Cliente | nu
     vencimento: conta.vencimento.toISOString(),
     status: conta.status,
     fonte: conta.fonte ?? undefined,
+    contabilizavel: conta.contabilizavel,
     criadoEm: conta.criadoEm.toISOString(),
     atualizadoEm: conta.atualizadoEm.toISOString(),
   };
@@ -62,10 +63,15 @@ contasRouter.get(
     const pagination = parsePagination(req);
     const natureza = typeof req.query.natureza === "string" ? (req.query.natureza as NaturezaConta) : undefined;
     const status = typeof req.query.status === "string" ? (req.query.status as StatusConta) : undefined;
+    const vencimentoAte =
+      typeof req.query.vencimentoAte === "string" && req.query.vencimentoAte
+        ? new Date(req.query.vencimentoAte)
+        : undefined;
 
     const where: Prisma.ContaFinanceiraWhereInput = {
       natureza,
       status,
+      vencimento: vencimentoAte ? { lte: vencimentoAte } : undefined,
       OR: pagination.busca
         ? [
             { descricao: { contains: pagination.busca, mode: "insensitive" } },
@@ -94,20 +100,20 @@ contasRouter.get(
   asyncHandler(async (_req, res) => {
     const [aPagar, aReceber, atrasado, porFonte] = await Promise.all([
       prisma.contaFinanceira.aggregate({
-        where: { natureza: "a_pagar", status: { not: "cancelado" } },
+        where: { natureza: "a_pagar", status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
       }),
       prisma.contaFinanceira.aggregate({
-        where: { natureza: "a_receber", status: { not: "cancelado" } },
+        where: { natureza: "a_receber", status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
       }),
       prisma.contaFinanceira.aggregate({
-        where: { status: "atrasado" },
+        where: { status: "atrasado", contabilizavel: true },
         _sum: { valor: true },
       }),
       prisma.contaFinanceira.groupBy({
         by: ["fonte"],
-        where: { fonte: { not: null }, status: { not: "cancelado" } },
+        where: { fonte: { not: null }, status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
       }),
     ]);

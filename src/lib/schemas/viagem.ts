@@ -20,6 +20,8 @@ export type ViagemFormValues = z.infer<typeof viagemSchema>;
 export const passageiroSchema = z.object({
   nome: z.string().min(2, "Informe o nome completo."),
   parentesco: z.string().optional().or(z.literal("")),
+  email: z.string().email("E-mail inválido.").optional().or(z.literal("")),
+  telefone: z.string().optional().or(z.literal("")),
   dataNascimento: z.string().optional().or(z.literal("")),
   numeroPassaporte: z.string().optional().or(z.literal("")),
   validadePassaporte: z.string().optional().or(z.literal("")),

@@ -69,6 +69,8 @@ export interface Passageiro extends Timestamps {
   viagemId: ID;
   nome: string;
   parentesco?: string;
+  email?: string;
+  telefone?: string;
   dataNascimento?: string;
   numeroPassaporte?: string;
   validadePassaporte?: string;
@@ -186,6 +188,9 @@ export interface ContaFinanceira extends Timestamps {
   vencimento: string;
   status: StatusConta;
   fonte?: string; // ex.: nome do cartão / conta bancária
+  // false para entradas apenas informativas (pagamento já quitado direto
+  // pelo cliente) — não entram nos somatórios de a pagar/a receber.
+  contabilizavel?: boolean;
 }
 
 export interface ResumoFinanceiro {

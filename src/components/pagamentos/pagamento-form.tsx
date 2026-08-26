@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Select,
   SelectContent,
@@ -21,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FORMA_PAGAMENTO_OPTIONS, TIPO_CARTAO_OPTIONS } from "@/lib/constants";
+import { FORMA_PAGAMENTO_OPTIONS, campoOrigemLabel, origemPagamentoOptions } from "@/lib/constants";
 import { pagamentoSchema, type PagamentoFormValues } from "@/lib/schemas/pagamento";
 import type { Pagamento } from "@/types/entities";
 
@@ -49,6 +50,8 @@ export function PagamentoForm({ pagamento, onSubmit, isSubmitting, onCancel }: P
   });
 
   const tipoCartao = form.watch("tipoCartao");
+  const formaPagamento = form.watch("formaPagamento");
+  const origemOptions = origemPagamentoOptions(formaPagamento);
 
   return (
     <Form {...form}>
@@ -109,7 +112,7 @@ export function PagamentoForm({ pagamento, onSubmit, isSubmitting, onCancel }: P
             name="tipoCartao"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cartão utilizado</FormLabel>
+                <FormLabel>{campoOrigemLabel(formaPagamento)}</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
@@ -117,7 +120,7 @@ export function PagamentoForm({ pagamento, onSubmit, isSubmitting, onCancel }: P
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {TIPO_CARTAO_OPTIONS.map((option) => (
+                    {origemOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -135,7 +138,7 @@ export function PagamentoForm({ pagamento, onSubmit, isSubmitting, onCancel }: P
               name="nomeTitularTerceiro"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Nome do titular do cartão</FormLabel>
+                  <FormLabel>Nome do titular / responsável</FormLabel>
                   <FormControl>
                     <Input placeholder="Nome completo do titular" {...field} />
                   </FormControl>
@@ -152,7 +155,7 @@ export function PagamentoForm({ pagamento, onSubmit, isSubmitting, onCancel }: P
               <FormItem>
                 <FormLabel>Valor</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" min="0" {...field} />
+                  <CurrencyInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

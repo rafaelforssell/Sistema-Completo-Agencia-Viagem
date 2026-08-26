@@ -33,11 +33,25 @@ import type { ContaFinanceira } from "@/types/entities";
 
 const PAGE_SIZE = 10;
 
+const VENCIMENTO_OPTIONS = [
+  { value: "todos", label: "Qualquer vencimento" },
+  { value: "7", label: "Próximos 7 dias" },
+  { value: "15", label: "Próximos 15 dias" },
+  { value: "30", label: "Próximos 30 dias" },
+];
+
+function vencimentoAteISO(dias: number): string {
+  const data = new Date();
+  data.setDate(data.getDate() + dias);
+  return data.toISOString().slice(0, 10);
+}
+
 export default function ContasPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [busca, setBusca] = useState("");
   const [natureza, setNatureza] = useState("todas");
   const [status, setStatus] = useState("todos");
+  const [vencimento, setVencimento] = useState("todos");
   const [formOpen, setFormOpen] = useState(false);
   const [editando, setEditando] = useState<ContaFinanceira | null>(null);
   const [removendo, setRemovendo] = useState<ContaFinanceira | null>(null);
@@ -50,6 +64,7 @@ export default function ContasPage() {
     busca: buscaDebounced || undefined,
     natureza: natureza === "todas" ? undefined : natureza,
     status: status === "todos" ? undefined : status,
+    vencimentoAte: vencimento === "todos" ? undefined : vencimentoAteISO(Number(vencimento)),
   });
 
   const criar = useCriarConta();
@@ -135,6 +150,18 @@ export default function ContasPage() {
               <SelectContent>
                 <SelectItem value="todos">Todos os status</SelectItem>
                 {STATUS_CONTA_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={vencimento} onValueChange={(v) => { setVencimento(v); setPageIndex(0); }}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VENCIMENTO_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

@@ -15,6 +15,29 @@ const formaPagamentoEnum = z.enum([
 ]);
 const tipoCartaoEnum = z.enum(["agencia", "cliente", "terceiro"]);
 
+// Mesmo texto que o frontend monta em origemPagamentoLabel (src/lib/constants.ts)
+// para o campo "fonte" da conta gerada ficar coerente com o que aparece no
+// formulário de pagamento (ex.: "Pix do Cliente" em vez de "Cartão Cliente"
+// quando a forma de pagamento não é cartão).
+const ORIGEM_PREFIXO: Record<z.infer<typeof formaPagamentoEnum>, string> = {
+  cartao_credito: "Cartão",
+  cartao_debito: "Cartão",
+  pix: "Pix",
+  boleto: "Boleto",
+  transferencia: "Transferência",
+  dinheiro: "Dinheiro",
+};
+
+const ORIGEM_SUFIXO: Record<z.infer<typeof tipoCartaoEnum>, string> = {
+  agencia: "da Agência",
+  cliente: "do Cliente",
+  terceiro: "de Terceiro",
+};
+
+function fonteLabel(forma: z.infer<typeof formaPagamentoEnum>, tipo: z.infer<typeof tipoCartaoEnum>): string {
+  return `${ORIGEM_PREFIXO[forma]} ${ORIGEM_SUFIXO[tipo]}`;
+}
+
 const pagamentoBaseSchema = z.object({
   companhiaAerea: z.string().optional().or(z.literal("")),
   fornecedor: z.string().min(2),
@@ -67,43 +90,51 @@ export function serializePagamento(pagamento: Pagamento) {
   };
 }
 
-// Quando um pagamento é feito no cartão da própria agência, a agência
-// adiantou o valor e o cliente precisa repassar — isso gera automaticamente
-// uma conta "a receber" vinculada ao pagamento (ver
-// AskUserQuestion/decisão do usuário: só tipoCartao "agencia" gera conta;
-// "cliente" e "terceiro" não, pois não há dívida a cobrar). O vínculo por
-// pagamentoId (unique + onDelete: Cascade) mantém a conta em sincronia e a
-// remove automaticamente se o pagamento for excluído.
+// Todo pagamento (exceto de terceiro, onde não fica claro quem deve a quem)
+// gera automaticamente uma conta vinculada, pra servir de agenda/cronograma
+// em Contas e no Painel:
+// - Cartão Agência: a agência adiantou o valor, o cliente ainda precisa
+//   repassar — conta "a receber" pendente, entra nos totais (contabilizavel).
+// - Cartão Cliente: o cliente já pagou direto, não há dívida — conta criada
+//   só como registro/agenda, com status "pago" (fixo) e fora dos totais
+//   (contabilizavel = false), pra não inflar "a receber" com algo já quitado.
+// O vínculo por pagamentoId (unique + onDelete: Cascade) mantém a conta em
+// sincronia e a remove automaticamente se o pagamento for excluído.
 async function sincronizarContaDoPagamento(pagamento: Pagamento, viagem: Viagem & { cliente: Cliente }) {
-  if (pagamento.tipoCartao !== "agencia") {
+  if (pagamento.tipoCartao === "terceiro") {
     await prisma.contaFinanceira.deleteMany({ where: { pagamentoId: pagamento.id } });
     return;
   }
 
-  const descricao = `Repasse do cliente — pagamento a ${pagamento.fornecedor} (${viagem.destino})`;
+  const ehAgencia = pagamento.tipoCartao === "agencia";
+  const parcelasTexto = pagamento.parcelas > 1 ? ` — ${pagamento.parcelas}x` : "";
+  const descricao = `Pagamento a ${pagamento.fornecedor} (${viagem.destino})${parcelasTexto}`;
+  const fonte = fonteLabel(pagamento.formaPagamento, pagamento.tipoCartao);
+
+  const dadosComuns = {
+    descricao,
+    origemNome: viagem.cliente.nome,
+    clienteId: viagem.clienteId,
+    valor: pagamento.valor,
+    vencimento: pagamento.dataPagamento,
+    fonte,
+    contabilizavel: ehAgencia,
+  };
 
   await prisma.contaFinanceira.upsert({
     where: { pagamentoId: pagamento.id },
     create: {
       natureza: "a_receber",
-      descricao,
       origem: "cliente",
-      origemNome: viagem.cliente.nome,
-      clienteId: viagem.clienteId,
       viagemId: viagem.id,
       pagamentoId: pagamento.id,
-      valor: pagamento.valor,
-      vencimento: pagamento.dataPagamento,
-      status: "pendente",
-      fonte: "Cartão Agência",
+      status: ehAgencia ? "pendente" : "pago",
+      ...dadosComuns,
     },
-    update: {
-      descricao,
-      origemNome: viagem.cliente.nome,
-      clienteId: viagem.clienteId,
-      valor: pagamento.valor,
-      vencimento: pagamento.dataPagamento,
-    },
+    // Status do "Cartão Cliente" é sempre "pago" (nada a cobrar); do
+    // "Cartão Agência" fica como o admin deixou (evita resetar pra
+    // "pendente" um pagamento que ele já marcou como pago manualmente).
+    update: ehAgencia ? dadosComuns : { ...dadosComuns, status: "pago" },
   });
 }
 

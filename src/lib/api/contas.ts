@@ -9,6 +9,7 @@ import type {
 export interface ContasFiltro extends PaginationParams {
   natureza?: string;
   status?: string;
+  vencimentoAte?: string;
 }
 
 export type ContaInput = Omit<

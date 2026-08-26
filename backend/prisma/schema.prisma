@@ -73,6 +73,8 @@ model Passageiro {
   viagemId           String
   nome               String
   parentesco         String?
+  email              String?
+  telefone           String?
   dataNascimento     DateTime?
   numeroPassaporte   String?
   validadePassaporte DateTime?
@@ -176,6 +178,10 @@ model ContaFinanceira {
   vencimento DateTime
   status     StatusConta   @default(pendente)
   fonte      String?
+  // false para entradas apenas informativas (ex.: pagamento já quitado
+  // direto pelo cliente) — aparecem na listagem, mas não entram nos
+  // somatórios de "a pagar"/"a receber" do resumo e do painel.
+  contabilizavel Boolean   @default(true)
   criadoEm   DateTime      @default(now())
   atualizadoEm DateTime    @updatedAt
 

@@ -14,7 +14,7 @@ import {
   usePagamentosPorViagem,
   useRemoverPagamento,
 } from "@/hooks/use-pagamentos";
-import { FORMA_PAGAMENTO_LABEL, TIPO_CARTAO_LABEL } from "@/lib/constants";
+import { FORMA_PAGAMENTO_LABEL, origemPagamentoLabel } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Pagamento } from "@/types/entities";
 
@@ -61,7 +61,7 @@ export function PagamentosTab({ viagemId }: { viagemId: string }) {
               <div className="flex shrink-0 items-center gap-2">
                 <StatusBadge
                   tone={pagamento.tipoCartao === "agencia" ? "info" : pagamento.tipoCartao === "cliente" ? "success" : "warning"}
-                  label={TIPO_CARTAO_LABEL[pagamento.tipoCartao]}
+                  label={origemPagamentoLabel(pagamento.formaPagamento, pagamento.tipoCartao)}
                 />
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditando(pagamento); setFormOpen(true); }}>
                   <Pencil className="h-4 w-4" />

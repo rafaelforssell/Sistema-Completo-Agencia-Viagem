@@ -20,7 +20,10 @@ export const contaColumns: ColumnDef<ContaFinanceira>[] = [
     cell: ({ row }) => (
       <div className="max-w-xs">
         <p className="truncate text-sm font-medium">{row.original.descricao}</p>
-        <p className="truncate text-xs text-muted-foreground">{row.original.origemNome}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {row.original.origemNome}
+          {row.original.contabilizavel === false && " · só agenda, não conta no total"}
+        </p>
       </div>
     ),
   },

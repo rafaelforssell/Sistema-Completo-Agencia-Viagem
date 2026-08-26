@@ -52,11 +52,11 @@ dashboardRouter.get(
         select: { validadePassaporte: true },
       }),
       prisma.contaFinanceira.aggregate({
-        where: { natureza: "a_pagar", status: { not: "cancelado" } },
+        where: { natureza: "a_pagar", status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
       }),
       prisma.contaFinanceira.aggregate({
-        where: { natureza: "a_receber", status: { not: "cancelado" } },
+        where: { natureza: "a_receber", status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
       }),
     ]);

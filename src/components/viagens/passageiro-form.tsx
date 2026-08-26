@@ -29,6 +29,8 @@ export function PassageiroForm({ passageiro, onSubmit, isSubmitting, onCancel }:
     defaultValues: {
       nome: passageiro?.nome ?? "",
       parentesco: passageiro?.parentesco ?? "",
+      email: passageiro?.email ?? "",
+      telefone: passageiro?.telefone ?? "",
       dataNascimento: passageiro?.dataNascimento?.slice(0, 10) ?? "",
       numeroPassaporte: passageiro?.numeroPassaporte ?? "",
       validadePassaporte: passageiro?.validadePassaporte?.slice(0, 10) ?? "",
@@ -61,6 +63,32 @@ export function PassageiroForm({ passageiro, onSubmit, isSubmitting, onCancel }:
                 <FormLabel>Parentesco</FormLabel>
                 <FormControl>
                   <Input placeholder="Cônjuge, filho(a)..." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>E-mail</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="maria@email.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="telefone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Telefone</FormLabel>
+                <FormControl>
+                  <Input placeholder="(11) 99999-9999" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

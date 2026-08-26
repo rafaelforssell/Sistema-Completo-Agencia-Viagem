@@ -9,7 +9,7 @@ import { serializeCliente } from "../clientes/clientes.routes";
 import { serializeAnexo } from "../anexos/anexos.routes";
 import { serializePagamento, pagamentoSchema, sincronizarContaDoPagamento } from "../pagamentos/pagamentos.routes";
 import { serializeReembolso, reembolsoSchema, reembolsoToData } from "../reembolsos/reembolsos.routes";
-import { passageirosRouter } from "./passageiros.routes";
+import { passageirosRouter, serializePassageiro } from "./passageiros.routes";
 import { generateVoucherPdf, voucherUrl } from "./voucher.service";
 
 const viagemBaseSchema = z.object({
@@ -108,18 +108,7 @@ viagensRouter.get(
     res.json({
       ...serializeViagem(viagem),
       cliente: serializeCliente(viagem.cliente),
-      passageiros: viagem.passageiros.map((p) => ({
-        id: p.id,
-        viagemId: p.viagemId,
-        nome: p.nome,
-        parentesco: p.parentesco ?? undefined,
-        dataNascimento: p.dataNascimento?.toISOString(),
-        numeroPassaporte: p.numeroPassaporte ?? undefined,
-        validadePassaporte: p.validadePassaporte?.toISOString(),
-        numeroBilhete: p.numeroBilhete ?? undefined,
-        criadoEm: p.criadoEm.toISOString(),
-        atualizadoEm: p.atualizadoEm.toISOString(),
-      })),
+      passageiros: viagem.passageiros.map(serializePassageiro),
       pagamentos: viagem.pagamentos.map(serializePagamento),
       reembolsos: viagem.reembolsos.map(serializeReembolso),
       anexos: viagem.anexos.map(serializeAnexo),

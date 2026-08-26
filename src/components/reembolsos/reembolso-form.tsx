@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Select,
   SelectContent,
@@ -101,7 +102,7 @@ export function ReembolsoForm({ reembolso, pagamentos, onSubmit, isSubmitting, o
               <FormItem>
                 <FormLabel>Valor solicitado</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" min="0" {...field} />
+                  <CurrencyInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -114,7 +115,7 @@ export function ReembolsoForm({ reembolso, pagamentos, onSubmit, isSubmitting, o
               <FormItem>
                 <FormLabel>Valor aprovado</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" min="0" {...field} value={field.value ?? ""} />
+                  <CurrencyInput {...field} value={field.value ?? 0} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

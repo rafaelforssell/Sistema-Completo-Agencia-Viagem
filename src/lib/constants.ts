@@ -24,6 +24,11 @@ export const STATUS_VIAGEM_OPTIONS = Object.entries(STATUS_VIAGEM_LABEL).map(
   ([value, label]) => ({ value: value as StatusViagem, label })
 );
 
+// "tipoCartao" no banco representa quem adiantou o dinheiro (agência, cliente
+// ou terceiro) — isso vale para qualquer forma de pagamento, não só cartão.
+// O texto exibido, porém, precisa soar certo pra Pix/boleto/dinheiro também,
+// daí o rótulo e as opções serem montados a partir da forma de pagamento
+// escolhida em vez de um texto fixo com a palavra "Cartão".
 export const TIPO_CARTAO_LABEL: Record<TipoCartao, string> = {
   agencia: "Cartão Agência",
   cliente: "Cartão Cliente",
@@ -46,6 +51,45 @@ export const FORMA_PAGAMENTO_LABEL: Record<FormaPagamento, string> = {
 export const FORMA_PAGAMENTO_OPTIONS = Object.entries(FORMA_PAGAMENTO_LABEL).map(
   ([value, label]) => ({ value: value as FormaPagamento, label })
 );
+
+const CAMPO_ORIGEM_LABEL: Record<FormaPagamento, string> = {
+  cartao_credito: "Cartão utilizado",
+  cartao_debito: "Cartão utilizado",
+  pix: "Chave Pix utilizada",
+  boleto: "Origem do boleto",
+  transferencia: "Conta de origem",
+  dinheiro: "Origem do dinheiro",
+};
+
+const ORIGEM_PREFIXO: Record<FormaPagamento, string> = {
+  cartao_credito: "Cartão",
+  cartao_debito: "Cartão",
+  pix: "Pix",
+  boleto: "Boleto",
+  transferencia: "Transferência",
+  dinheiro: "Dinheiro",
+};
+
+const ORIGEM_SUFIXO: Record<TipoCartao, string> = {
+  agencia: "da Agência",
+  cliente: "do Cliente",
+  terceiro: "de Terceiro",
+};
+
+export function campoOrigemLabel(forma: FormaPagamento): string {
+  return CAMPO_ORIGEM_LABEL[forma];
+}
+
+export function origemPagamentoOptions(forma: FormaPagamento) {
+  return (Object.keys(ORIGEM_SUFIXO) as TipoCartao[]).map((tipo) => ({
+    value: tipo,
+    label: `${ORIGEM_PREFIXO[forma]} ${ORIGEM_SUFIXO[tipo]}`,
+  }));
+}
+
+export function origemPagamentoLabel(forma: FormaPagamento, tipo: TipoCartao): string {
+  return `${ORIGEM_PREFIXO[forma]} ${ORIGEM_SUFIXO[tipo]}`;
+}
 
 export const STATUS_REEMBOLSO_LABEL: Record<StatusReembolso, string> = {
   solicitado: "Solicitado",
