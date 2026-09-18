@@ -13,6 +13,11 @@ import { comissoesRouter } from "./modules/comissoes/comissoes.routes";
 import { anexosRouter } from "./modules/anexos/anexos.routes";
 import { dashboardRouter, atividadesRouter, alertasRouter } from "./modules/dashboard/dashboard.routes";
 import { fornecedoresRouter } from "./modules/fornecedores/fornecedores.routes";
+import { vendasRouter } from "./modules/vendas/vendas.routes";
+import { leadsRouter } from "./modules/crm/leads.routes";
+import { interacoesCrmRouter } from "./modules/crm/interacoes.routes";
+import { tarefasCrmRouter } from "./modules/crm/tarefas.routes";
+import { voosRouter } from "./modules/integracoes/voo.routes";
 
 export const app = express();
 
@@ -47,6 +52,11 @@ api.use("/reembolsos", requireAuth, reembolsosRouter);
 api.use("/contas", requireAuth, contasRouter);
 api.use("/comissoes", requireAuth, comissoesRouter);
 api.use("/fornecedores", requireAuth, fornecedoresRouter);
+api.use("/vendas", requireAuth, vendasRouter);
+api.use("/crm/leads", requireAuth, leadsRouter);
+api.use("/crm/interacoes", requireAuth, interacoesCrmRouter);
+api.use("/crm/tarefas", requireAuth, tarefasCrmRouter);
+api.use("/integracoes/voo", requireAuth, voosRouter);
 api.use("/anexos", requireAuth, anexosRouter);
 api.use("/dashboard", requireAuth, dashboardRouter);
 api.use("/atividades", requireAuth, atividadesRouter);

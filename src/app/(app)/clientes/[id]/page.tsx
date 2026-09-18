@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   Cake,
+  IdCard,
   Mail,
+  MapPin,
   Pencil,
   Phone,
   Plane,
@@ -96,7 +98,9 @@ export default function ClienteDetalhePage() {
             </div>
             <div className="flex items-center gap-2.5 text-muted-foreground">
               <Phone className="h-4 w-4 shrink-0" />
-              <span className="text-foreground">{cliente.telefone || "Não informado"}</span>
+              <span className="text-foreground">
+                {cliente.telefone ? `${cliente.telefoneDdi ?? ""} ${cliente.telefone}`.trim() : "Não informado"}
+              </span>
             </div>
             <div className="flex items-center gap-2.5 text-muted-foreground">
               <Cake className="h-4 w-4 shrink-0" />
@@ -117,6 +121,31 @@ export default function ClienteDetalhePage() {
                 </div>
               </div>
             </div>
+            {(cliente.rg || cliente.cpf) && (
+              <div className="flex items-start gap-2.5 text-muted-foreground">
+                <IdCard className="mt-0.5 h-4 w-4 shrink-0" />
+                <div className="space-y-0.5 text-foreground">
+                  {cliente.rg && <p>RG: {cliente.rg}</p>}
+                  {cliente.cpf && <p>CPF: {cliente.cpf}</p>}
+                </div>
+              </div>
+            )}
+            {(cliente.logradouro || cliente.cidade) && (
+              <div className="flex items-start gap-2.5 text-muted-foreground">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                <div className="text-foreground">
+                  <p>
+                    {cliente.logradouro}
+                    {cliente.numero ? `, ${cliente.numero}` : ""}
+                    {cliente.complemento ? ` - ${cliente.complemento}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {[cliente.bairro, cliente.cidade, cliente.estado].filter(Boolean).join(" - ")}
+                    {cliente.cep ? ` · CEP ${cliente.cep}` : ""}
+                  </p>
+                </div>
+              </div>
+            )}
             {cliente.observacoes && (
               <p className="border-t border-border pt-3 text-muted-foreground">{cliente.observacoes}</p>
             )}

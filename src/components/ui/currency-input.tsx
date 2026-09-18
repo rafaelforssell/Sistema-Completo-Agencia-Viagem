@@ -12,7 +12,7 @@ function centsToDisplay(cents: number): string {
 
 interface CurrencyInputProps
   extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange" | "type"> {
-  value: number;
+  value?: number;
   onChange: (value: number) => void;
 }
 
@@ -20,7 +20,7 @@ interface CurrencyInputProps
 // interpretados como centavos da direita pra esquerda (padrão de app
 // bancário brasileiro) — evita erro de vírgula/ponto no valor monetário.
 export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-  function CurrencyInput({ value, onChange, ...props }, ref) {
+  function CurrencyInput({ value = 0, onChange, ...props }, ref) {
     const cents = Math.round((value || 0) * 100);
     const display = centsToDisplay(cents);
 

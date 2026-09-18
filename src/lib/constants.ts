@@ -1,15 +1,20 @@
 import type {
+  DestinoReembolso,
+  EtapaLead,
   FormaPagamento,
   NaturezaConta,
   SeveridadeAlerta,
   StatusComissao,
   StatusConta,
   StatusReembolso,
+  StatusVenda,
   StatusViagem,
   TipoAlerta,
   TipoCartao,
   TipoDocumento,
   TipoFornecedor,
+  TipoInteracaoCrm,
+  TipoVenda,
 } from "@/types/entities";
 
 export const STATUS_VIAGEM_LABEL: Record<StatusViagem, string> = {
@@ -103,6 +108,15 @@ export const STATUS_REEMBOLSO_OPTIONS = Object.entries(STATUS_REEMBOLSO_LABEL).m
   ([value, label]) => ({ value: value as StatusReembolso, label })
 );
 
+export const DESTINO_REEMBOLSO_LABEL: Record<DestinoReembolso, string> = {
+  cliente: "Devolver ao cliente",
+  carteira_fornecedor: "Virar crédito no fornecedor (carteira digital)",
+};
+
+export const DESTINO_REEMBOLSO_OPTIONS = Object.entries(DESTINO_REEMBOLSO_LABEL).map(
+  ([value, label]) => ({ value: value as DestinoReembolso, label })
+);
+
 export const NATUREZA_CONTA_LABEL: Record<NaturezaConta, string> = {
   a_pagar: "A pagar",
   a_receber: "A receber",
@@ -142,10 +156,15 @@ export const TIPO_DOCUMENTO_OPTIONS = Object.entries(TIPO_DOCUMENTO_LABEL).map(
 );
 
 export const TIPO_FORNECEDOR_LABEL: Record<TipoFornecedor, string> = {
-  companhia_aerea: "Companhia aérea",
+  companhia_aerea: "Aéreo",
   hotel: "Hotel",
   operadora: "Operadora",
-  seguradora: "Seguradora",
+  seguradora: "Seguro viagem",
+  transfer: "Transfer",
+  aluguel_carro: "Aluguel de carro",
+  passeios: "Passeio",
+  cruzeiro: "Cruzeiro",
+  ingressos: "Ingressos",
   outro: "Outro",
 };
 
@@ -153,10 +172,62 @@ export const TIPO_FORNECEDOR_OPTIONS = Object.entries(TIPO_FORNECEDOR_LABEL).map
   ([value, label]) => ({ value: value as TipoFornecedor, label })
 );
 
+export const TIPO_VENDA_LABEL: Record<TipoVenda, string> = {
+  viagem: "Viagem",
+  aereo: "Aéreo",
+  hotel: "Hotel",
+  transfer: "Transfer",
+  seguro: "Seguro viagem",
+  cruzeiro: "Cruzeiro",
+  passeio: "Passeio",
+  aluguel_carro: "Aluguel de carro",
+  ingressos: "Ingressos",
+  outro: "Outro",
+};
+
+export const TIPO_VENDA_OPTIONS = Object.entries(TIPO_VENDA_LABEL).map(
+  ([value, label]) => ({ value: value as TipoVenda, label })
+);
+
+export const STATUS_VENDA_LABEL: Record<StatusVenda, string> = {
+  orcamento: "Orçamento",
+  confirmada: "Confirmada",
+  cancelada: "Cancelada",
+};
+
+export const STATUS_VENDA_OPTIONS = Object.entries(STATUS_VENDA_LABEL).map(
+  ([value, label]) => ({ value: value as StatusVenda, label })
+);
+
+export const ETAPA_LEAD_LABEL: Record<EtapaLead, string> = {
+  novo: "Novo",
+  contato: "Contato",
+  proposta: "Proposta",
+  fechado: "Fechado",
+  perdido: "Perdido",
+};
+
+export const ETAPA_LEAD_OPTIONS = Object.entries(ETAPA_LEAD_LABEL).map(
+  ([value, label]) => ({ value: value as EtapaLead, label })
+);
+
+export const TIPO_INTERACAO_CRM_LABEL: Record<TipoInteracaoCrm, string> = {
+  ligacao: "Ligação",
+  email: "E-mail",
+  whatsapp: "WhatsApp",
+  reuniao: "Reunião",
+  nota: "Nota",
+};
+
+export const TIPO_INTERACAO_CRM_OPTIONS = Object.entries(TIPO_INTERACAO_CRM_LABEL).map(
+  ([value, label]) => ({ value: value as TipoInteracaoCrm, label })
+);
+
 export const TIPO_ALERTA_LABEL: Record<TipoAlerta, string> = {
   checkin: "Check-in aéreo",
   aniversario: "Aniversário",
   passaporte: "Passaporte vencendo",
+  termino: "Término de viagem",
 };
 
 export const SEVERIDADE_ALERTA_LABEL: Record<SeveridadeAlerta, string> = {

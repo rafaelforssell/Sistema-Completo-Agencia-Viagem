@@ -42,9 +42,19 @@ export interface Cliente extends Timestamps {
   nome: string;
   email?: string;
   telefone?: string;
+  telefoneDdi?: string;
   dataNascimento?: string;
   numeroPassaporte?: string;
   validadePassaporte?: string;
+  rg?: string;
+  cpf?: string;
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
   observacoes?: string;
   anexos?: DocumentoAnexo[];
   viagens?: ViagemResumo[];
@@ -151,11 +161,14 @@ export type PagamentoInput = Omit<
 // ---------- Reembolsos ----------
 
 export type StatusReembolso = "solicitado" | "em_analise" | "aprovado" | "pago" | "negado";
+export type DestinoReembolso = "cliente" | "carteira_fornecedor";
 
 export interface Reembolso extends Timestamps {
   id: ID;
   viagemId: ID;
   pagamentoId?: ID;
+  fornecedorId?: ID;
+  destino: DestinoReembolso;
   motivo: string;
   valorSolicitado: number;
   valorAprovado?: number;
@@ -223,24 +236,178 @@ export type ComissaoInput = Omit<
 
 // ---------- Fornecedores ----------
 
-export type TipoFornecedor = "companhia_aerea" | "hotel" | "operadora" | "seguradora" | "outro";
+export type TipoFornecedor =
+  | "companhia_aerea"
+  | "hotel"
+  | "operadora"
+  | "seguradora"
+  | "transfer"
+  | "aluguel_carro"
+  | "passeios"
+  | "cruzeiro"
+  | "ingressos"
+  | "outro";
+
+export interface FornecedorContato {
+  id: ID;
+  nome: string;
+  funcao?: string;
+}
 
 export interface Fornecedor extends Timestamps {
   id: ID;
   nome: string;
   tipo: TipoFornecedor;
   email?: string;
+  email2?: string;
   telefone?: string;
+  telefone2?: string;
+  telefone3?: string;
+  site?: string;
+  cidade?: string;
+  pais?: string;
+  descricaoServicos?: string;
+  observacoes?: string;
+  contatos: FornecedorContato[];
+}
+
+export type FornecedorInput = Omit<Fornecedor, "id" | "criadoEm" | "atualizadoEm" | "contatos"> & {
+  contatos?: Omit<FornecedorContato, "id">[];
+};
+
+// ---------- Carteira digital ----------
+
+export type TipoCarteiraMovimento = "credito" | "debito";
+
+export interface CarteiraMovimento {
+  id: ID;
+  fornecedorId: ID;
+  tipo: TipoCarteiraMovimento;
+  valor: number;
+  descricao?: string;
+  data: string;
+  origem: "manual" | "reembolso";
+  reembolsoId?: ID;
+  criadoEm: string;
+}
+
+export interface CarteiraResumo {
+  saldo: number;
+  movimentos: CarteiraMovimento[];
+}
+
+export type CarteiraMovimentoInput = {
+  tipo: TipoCarteiraMovimento;
+  valor: number;
+  descricao?: string;
+  data: string;
+};
+
+// ---------- Vendas ----------
+
+export type TipoVenda =
+  | "viagem"
+  | "aereo"
+  | "hotel"
+  | "transfer"
+  | "seguro"
+  | "cruzeiro"
+  | "passeio"
+  | "aluguel_carro"
+  | "ingressos"
+  | "outro";
+export type StatusVenda = "orcamento" | "confirmada" | "cancelada";
+
+export interface NumeroPedidoExtra {
+  id: ID;
+  numero: string;
+  descricao?: string;
+}
+
+export interface VendaItem {
+  id: ID;
+  tipo: TipoVenda;
+  fornecedorId?: ID;
+  descricao?: string;
+  valor: number;
+  dataAluguel?: string;
+  seguroCompleto?: boolean;
+}
+
+export interface Venda extends Timestamps {
+  id: ID;
+  clienteId: ID;
+  viagemId?: ID;
+  status: StatusVenda;
+  dataVenda: string;
+  numeroPedido: string;
+  observacoes?: string;
+  itens: VendaItem[];
+  valorTotal: number;
+  numeroPedidoExtras: NumeroPedidoExtra[];
+}
+
+export type VendaInput = Omit<
+  Venda,
+  "id" | "criadoEm" | "atualizadoEm" | "numeroPedido" | "numeroPedidoExtras" | "itens" | "valorTotal"
+> & {
+  numeroPedidoExtras?: Omit<NumeroPedidoExtra, "id">[];
+  itens: Omit<VendaItem, "id">[];
+};
+
+// ---------- CRM ----------
+
+export type EtapaLead = "novo" | "contato" | "proposta" | "fechado" | "perdido";
+
+export interface Lead extends Timestamps {
+  id: ID;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  origem?: string;
+  etapa: EtapaLead;
+  clienteId?: ID;
+  valorEstimado?: number;
   observacoes?: string;
 }
 
-export type FornecedorInput = Omit<Fornecedor, "id" | "criadoEm" | "atualizadoEm">;
+export type LeadInput = Omit<Lead, "id" | "criadoEm" | "atualizadoEm">;
+
+export type TipoInteracaoCrm = "ligacao" | "email" | "whatsapp" | "reuniao" | "nota";
+
+export interface InteracaoCrm extends Timestamps {
+  id: ID;
+  leadId?: ID;
+  clienteId?: ID;
+  tipo: TipoInteracaoCrm;
+  descricao: string;
+  data: string;
+}
+
+export type InteracaoCrmInput = Omit<InteracaoCrm, "id" | "criadoEm" | "atualizadoEm">;
+
+export interface TarefaCrm extends Timestamps {
+  id: ID;
+  leadId?: ID;
+  clienteId?: ID;
+  titulo: string;
+  descricao?: string;
+  dataVencimento: string;
+  concluida: boolean;
+}
+
+export type TarefaCrmInput = Omit<TarefaCrm, "id" | "criadoEm" | "atualizadoEm">;
 
 // ---------- Dashboard / Resumo / Alertas ----------
 
 export interface DashboardMetricas {
   totalClientes: number;
   viagensAtivas: number;
+  viagensPorStatus: {
+    emCotacao: number;
+    emAndamento: number;
+    finalizadas: number;
+  };
   proximosCheckIns: number;
   aniversariantesSemana: number;
   passaportesVencendoEm30Dias: number;
@@ -265,7 +432,7 @@ export interface AtividadeFeed {
   referenciaTipo?: "cliente" | "viagem" | "pagamento" | "reembolso";
 }
 
-export type TipoAlerta = "checkin" | "aniversario" | "passaporte";
+export type TipoAlerta = "checkin" | "aniversario" | "passaporte" | "termino";
 export type SeveridadeAlerta = "info" | "atencao" | "urgente";
 
 export interface Alerta {

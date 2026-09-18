@@ -8,7 +8,12 @@ import { parsePagination, paginatedResponse } from "../../utils/pagination";
 import { serializeCliente } from "../clientes/clientes.routes";
 import { serializeAnexo } from "../anexos/anexos.routes";
 import { serializePagamento, pagamentoSchema, sincronizarContaDoPagamento } from "../pagamentos/pagamentos.routes";
-import { serializeReembolso, reembolsoSchema, reembolsoToData } from "../reembolsos/reembolsos.routes";
+import {
+  serializeReembolso,
+  reembolsoSchema,
+  reembolsoToData,
+  sincronizarCarteiraDoReembolso,
+} from "../reembolsos/reembolsos.routes";
 import { passageirosRouter, serializePassageiro } from "./passageiros.routes";
 import { generateVoucherPdf, voucherUrl } from "./voucher.service";
 
@@ -213,6 +218,7 @@ viagensRouter.post(
     const reembolso = await prisma.reembolso.create({
       data: { viagemId: req.params.viagemId, ...reembolsoToData(input) },
     });
+    await sincronizarCarteiraDoReembolso(reembolso);
     res.status(201).json(serializeReembolso(reembolso));
   })
 );

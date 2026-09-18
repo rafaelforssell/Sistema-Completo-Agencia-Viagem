@@ -45,7 +45,7 @@ export default function AlertasPage() {
     <div className="space-y-6">
       <PageHeader
         title="Alertas"
-        description="Check-in aéreo, aniversários de clientes e passaportes vencendo."
+        description="Check-in aéreo, aniversários de clientes, passaportes vencendo e viagens chegando ao término."
         actions={
           <>
             <Select value={tipo} onValueChange={setTipo}>

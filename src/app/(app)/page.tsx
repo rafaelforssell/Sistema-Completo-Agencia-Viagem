@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   Cake,
+  CheckCircle2,
+  FileSearch,
   PlaneTakeoff,
   Stamp,
   UserPlus,
@@ -17,11 +19,10 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader } from "@/components/common/page-header";
 import { StatCard } from "@/components/common/stat-card";
 import { StatusBadge, type StatusTone } from "@/components/common/status-badge";
-import { useClientes } from "@/hooks/use-clientes";
 import { useDashboardMetricas } from "@/hooks/use-dashboard";
 import { useViagens } from "@/hooks/use-viagens";
 import { STATUS_VIAGEM_LABEL } from "@/lib/constants";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import type { StatusViagem } from "@/types/entities";
 
 const STATUS_TONE: Record<StatusViagem, StatusTone> = {
@@ -34,11 +35,6 @@ const STATUS_TONE: Record<StatusViagem, StatusTone> = {
 
 export default function DashboardPage() {
   const { data: metricas, isLoading: metricasLoading } = useDashboardMetricas();
-  const { data: clientesRecentes, isLoading: clientesLoading } = useClientes({
-    porPagina: 5,
-    ordenarPor: "criadoEm",
-    ordem: "desc",
-  });
   const { data: viagensRecentes, isLoading: viagensLoading } = useViagens({
     porPagina: 5,
     ordenarPor: "criadoEm",
@@ -114,33 +110,56 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Clientes recentes</CardTitle>
+            <CardTitle className="text-base">Viagens por status</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/clientes">
-                Ver todos
+              <Link href="/viagens">
+                Ver todas
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-1.5">
-            {clientesLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)
-            ) : !clientesRecentes || clientesRecentes.dados.length === 0 ? (
-              <EmptyState icon={Users} title="Nenhum cliente ainda" description="Cadastre o primeiro cliente da agência." />
+            {metricasLoading ? (
+              Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)
             ) : (
-              clientesRecentes.dados.map((cliente) => (
+              <>
                 <Link
-                  key={cliente.id}
-                  href={`/clientes/${cliente.id}`}
+                  href="/viagens"
                   className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-muted/50"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{cliente.nome}</p>
-                    <p className="truncate text-xs text-muted-foreground">{cliente.email || cliente.telefone || "—"}</p>
+                  <div className="flex items-center gap-2.5">
+                    <FileSearch className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Em cotação</span>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">{formatDate(cliente.criadoEm)}</span>
+                  <span className="font-display text-lg font-semibold">
+                    {metricas?.viagensPorStatus.emCotacao ?? 0}
+                  </span>
                 </Link>
-              ))
+                <Link
+                  href="/viagens"
+                  className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <PlaneTakeoff className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Em andamento</span>
+                  </div>
+                  <span className="font-display text-lg font-semibold">
+                    {metricas?.viagensPorStatus.emAndamento ?? 0}
+                  </span>
+                </Link>
+                <Link
+                  href="/viagens"
+                  className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Finalizadas</span>
+                  </div>
+                  <span className="font-display text-lg font-semibold">
+                    {metricas?.viagensPorStatus.finalizadas ?? 0}
+                  </span>
+                </Link>
+              </>
             )}
           </CardContent>
         </Card>

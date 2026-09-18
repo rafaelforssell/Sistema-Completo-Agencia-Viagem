@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { diffInDays, nextAnniversary } from "../../utils/dates";
 
-export type TipoAlerta = "checkin" | "aniversario" | "passaporte";
+export type TipoAlerta = "checkin" | "aniversario" | "passaporte" | "termino";
 export type SeveridadeAlerta = "info" | "atencao" | "urgente";
 
 export interface AlertaComputado {
@@ -18,6 +18,7 @@ export interface AlertaComputado {
 const CHECKIN_JANELA_DIAS = 3;
 const ANIVERSARIO_JANELA_DIAS = 7;
 const PASSAPORTE_JANELA_DIAS = 60;
+const TERMINO_JANELA_DIAS = 5;
 
 export async function computeAlertas(): Promise<AlertaComputado[]> {
   const hoje = new Date();
@@ -38,6 +39,22 @@ export async function computeAlertas(): Promise<AlertaComputado[]> {
         titulo: "Check-in aéreo se aproxima",
         descricao: `${viagem.cliente.nome} · ${viagem.destino} embarca em ${dias === 0 ? "hoje" : `${dias} dia(s)`}`,
         data: viagem.dataIda.toISOString(),
+        clienteId: viagem.clienteId,
+        viagemId: viagem.id,
+      });
+    }
+  }
+
+  for (const viagem of viagens) {
+    const dias = diffInDays(viagem.dataVolta, hoje);
+    if (dias >= 0 && dias <= TERMINO_JANELA_DIAS) {
+      alertas.push({
+        id: `termino:${viagem.id}`,
+        tipo: "termino",
+        severidade: dias <= 1 ? "urgente" : "atencao",
+        titulo: "Viagem chegando ao término",
+        descricao: `${viagem.cliente.nome} · ${viagem.destino} termina em ${dias === 0 ? "hoje" : `${dias} dia(s)`}`,
+        data: viagem.dataVolta.toISOString(),
         clienteId: viagem.clienteId,
         viagemId: viagem.id,
       });

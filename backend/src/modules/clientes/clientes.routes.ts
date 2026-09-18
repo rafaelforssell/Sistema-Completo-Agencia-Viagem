@@ -11,9 +11,19 @@ const clienteSchema = z.object({
   nome: z.string().min(2),
   email: z.string().email().optional().or(z.literal("")),
   telefone: z.string().optional().or(z.literal("")),
+  telefoneDdi: z.string().optional().or(z.literal("")),
   dataNascimento: z.string().optional().or(z.literal("")),
   numeroPassaporte: z.string().optional().or(z.literal("")),
   validadePassaporte: z.string().optional().or(z.literal("")),
+  rg: z.string().optional().or(z.literal("")),
+  cpf: z.string().optional().or(z.literal("")),
+  cep: z.string().optional().or(z.literal("")),
+  logradouro: z.string().optional().or(z.literal("")),
+  numero: z.string().optional().or(z.literal("")),
+  complemento: z.string().optional().or(z.literal("")),
+  bairro: z.string().optional().or(z.literal("")),
+  cidade: z.string().optional().or(z.literal("")),
+  estado: z.string().optional().or(z.literal("")),
   observacoes: z.string().optional().or(z.literal("")),
 });
 
@@ -26,9 +36,19 @@ function toData(input: z.infer<typeof clienteSchema>) {
     nome: input.nome,
     email: input.email || null,
     telefone: input.telefone || null,
+    telefoneDdi: input.telefoneDdi || null,
     dataNascimento: toDate(input.dataNascimento) ?? null,
     numeroPassaporte: input.numeroPassaporte || null,
     validadePassaporte: toDate(input.validadePassaporte) ?? null,
+    rg: input.rg || null,
+    cpf: input.cpf || null,
+    cep: input.cep || null,
+    logradouro: input.logradouro || null,
+    numero: input.numero || null,
+    complemento: input.complemento || null,
+    bairro: input.bairro || null,
+    cidade: input.cidade || null,
+    estado: input.estado || null,
     observacoes: input.observacoes || null,
   };
 }
@@ -39,9 +59,19 @@ export function serializeCliente(cliente: Cliente) {
     nome: cliente.nome,
     email: cliente.email ?? undefined,
     telefone: cliente.telefone ?? undefined,
+    telefoneDdi: cliente.telefoneDdi ?? undefined,
     dataNascimento: cliente.dataNascimento?.toISOString(),
     numeroPassaporte: cliente.numeroPassaporte ?? undefined,
     validadePassaporte: cliente.validadePassaporte?.toISOString(),
+    rg: cliente.rg ?? undefined,
+    cpf: cliente.cpf ?? undefined,
+    cep: cliente.cep ?? undefined,
+    logradouro: cliente.logradouro ?? undefined,
+    numero: cliente.numero ?? undefined,
+    complemento: cliente.complemento ?? undefined,
+    bairro: cliente.bairro ?? undefined,
+    cidade: cliente.cidade ?? undefined,
+    estado: cliente.estado ?? undefined,
     observacoes: cliente.observacoes ?? undefined,
     criadoEm: cliente.criadoEm.toISOString(),
     atualizadoEm: cliente.atualizadoEm.toISOString(),
@@ -124,9 +154,19 @@ clientesRouter.put(
     if (input.nome !== undefined) data.nome = input.nome;
     if (input.email !== undefined) data.email = input.email || null;
     if (input.telefone !== undefined) data.telefone = input.telefone || null;
+    if (input.telefoneDdi !== undefined) data.telefoneDdi = input.telefoneDdi || null;
     if (input.dataNascimento !== undefined) data.dataNascimento = toDate(input.dataNascimento) ?? null;
     if (input.numeroPassaporte !== undefined) data.numeroPassaporte = input.numeroPassaporte || null;
     if (input.validadePassaporte !== undefined) data.validadePassaporte = toDate(input.validadePassaporte) ?? null;
+    if (input.rg !== undefined) data.rg = input.rg || null;
+    if (input.cpf !== undefined) data.cpf = input.cpf || null;
+    if (input.cep !== undefined) data.cep = input.cep || null;
+    if (input.logradouro !== undefined) data.logradouro = input.logradouro || null;
+    if (input.numero !== undefined) data.numero = input.numero || null;
+    if (input.complemento !== undefined) data.complemento = input.complemento || null;
+    if (input.bairro !== undefined) data.bairro = input.bairro || null;
+    if (input.cidade !== undefined) data.cidade = input.cidade || null;
+    if (input.estado !== undefined) data.estado = input.estado || null;
     if (input.observacoes !== undefined) data.observacoes = input.observacoes || null;
 
     const cliente = await prisma.cliente.update({ where: { id: req.params.id }, data });

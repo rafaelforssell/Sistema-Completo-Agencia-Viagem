@@ -12,8 +12,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { DdiSelect } from "@/components/common/ddi-select";
+import { CepInput } from "@/components/ui/cep-input";
+import { CpfInput } from "@/components/ui/cpf-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useCepLookup } from "@/hooks/use-cep-lookup";
 import { clienteSchema, type ClienteFormValues } from "@/lib/schemas/cliente";
 import type { Cliente } from "@/types/entities";
 
@@ -25,18 +29,38 @@ interface ClienteFormProps {
 }
 
 export function ClienteForm({ cliente, onSubmit, isSubmitting, onCancel }: ClienteFormProps) {
+  const { buscarCep, isLoading: isBuscandoCep } = useCepLookup();
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteSchema),
     defaultValues: {
       nome: cliente?.nome ?? "",
       email: cliente?.email ?? "",
       telefone: cliente?.telefone ?? "",
+      telefoneDdi: cliente?.telefoneDdi ?? "+55",
       dataNascimento: cliente?.dataNascimento?.slice(0, 10) ?? "",
       numeroPassaporte: cliente?.numeroPassaporte ?? "",
       validadePassaporte: cliente?.validadePassaporte?.slice(0, 10) ?? "",
+      rg: cliente?.rg ?? "",
+      cpf: cliente?.cpf ?? "",
+      cep: cliente?.cep ?? "",
+      logradouro: cliente?.logradouro ?? "",
+      numero: cliente?.numero ?? "",
+      complemento: cliente?.complemento ?? "",
+      bairro: cliente?.bairro ?? "",
+      cidade: cliente?.cidade ?? "",
+      estado: cliente?.estado ?? "",
       observacoes: cliente?.observacoes ?? "",
     },
   });
+
+  async function handleCepBlur(cep: string) {
+    const endereco = await buscarCep(cep);
+    if (!endereco) return;
+    form.setValue("logradouro", endereco.logradouro, { shouldDirty: true });
+    form.setValue("bairro", endereco.bairro, { shouldDirty: true });
+    form.setValue("cidade", endereco.cidade, { shouldDirty: true });
+    form.setValue("estado", endereco.estado, { shouldDirty: true });
+  }
 
   return (
     <Form {...form}>
@@ -75,9 +99,18 @@ export function ClienteForm({ cliente, onSubmit, isSubmitting, onCancel }: Clien
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Telefone</FormLabel>
-                <FormControl>
-                  <Input placeholder="(11) 99999-9999" {...field} />
-                </FormControl>
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name="telefoneDdi"
+                    render={({ field: ddiField }) => (
+                      <DdiSelect value={ddiField.value} onChange={ddiField.onChange} />
+                    )}
+                  />
+                  <FormControl>
+                    <Input placeholder="11 99999-9999" {...field} />
+                  </FormControl>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -125,6 +158,142 @@ export function ClienteForm({ cliente, onSubmit, isSubmitting, onCancel }: Clien
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="rg"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>RG</FormLabel>
+                <FormControl>
+                  <Input placeholder="00.000.000-0" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="cpf"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CPF</FormLabel>
+                <FormControl>
+                  <CpfInput {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="space-y-5 rounded-lg border border-border p-4">
+          <p className="text-sm font-medium">Endereço</p>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="cep"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CEP {isBuscandoCep && "(buscando...)"}</FormLabel>
+                  <FormControl>
+                    <CepInput
+                      {...field}
+                      onBlur={(event) => {
+                        field.onBlur();
+                        void handleCepBlur(event.target.value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="logradouro"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Logradouro</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Rua, avenida..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid gap-5 sm:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="numero"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Número</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="complemento"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Complemento</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Apto, bloco..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bairro"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bairro</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="cidade"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cidade</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="estado"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estado</FormLabel>
+                  <FormControl>
+                    <Input placeholder="UF" maxLength={2} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <FormField

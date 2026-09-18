@@ -27,7 +27,8 @@ export const clienteColumns: ColumnDef<Cliente>[] = [
   {
     accessorKey: "telefone",
     header: "Telefone",
-    cell: ({ row }) => row.original.telefone || "—",
+    cell: ({ row }) =>
+      row.original.telefone ? `${row.original.telefoneDdi ?? ""} ${row.original.telefone}`.trim() : "—",
   },
   {
     accessorKey: "dataNascimento",

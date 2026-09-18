@@ -21,7 +21,10 @@ export const reembolsoColumns: ColumnDef<Reembolso>[] = [
     header: "Motivo",
     cell: ({ row }) => (
       <div className="max-w-xs">
-        <p className="truncate text-sm font-medium">{row.original.motivo}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-sm font-medium">{row.original.motivo}</p>
+          {row.original.destino === "carteira_fornecedor" && <StatusBadge tone="info" label="Carteira" />}
+        </div>
         <Link
           href={`/viagens/${row.original.viagemId}`}
           onClick={(e) => e.stopPropagation()}

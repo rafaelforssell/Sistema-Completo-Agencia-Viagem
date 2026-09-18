@@ -11,10 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { PageHeader } from "@/components/common/page-header";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { CarteiraTab } from "@/components/fornecedores/carteira-tab";
 import { fornecedorColumns } from "@/components/fornecedores/fornecedor-columns";
 import { FornecedorForm } from "@/components/fornecedores/fornecedor-form";
 import {
@@ -101,31 +103,45 @@ export default function FornecedoresPage() {
       />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="overflow-y-auto sm:max-h-[85vh] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editando ? "Editar fornecedor" : "Novo fornecedor"}</DialogTitle>
           </DialogHeader>
-          <FornecedorForm
-            fornecedor={editando ?? undefined}
-            isSubmitting={criar.isPending || atualizar.isPending}
-            onCancel={() => setFormOpen(false)}
-            onSubmit={(values) => {
-              if (editando) {
-                atualizar.mutate({ id: editando.id, input: values }, { onSuccess: () => setFormOpen(false) });
-              } else {
-                criar.mutate(values, { onSuccess: () => setFormOpen(false) });
-              }
-            }}
-          />
-          {editando && (
-            <Button
-              variant="ghost"
-              className="w-full text-destructive hover:text-destructive"
-              onClick={() => setRemovendo(editando)}
-            >
-              <Trash2 className="h-4 w-4" />
-              Remover fornecedor
-            </Button>
+
+          {editando ? (
+            <Tabs defaultValue="dados">
+              <TabsList>
+                <TabsTrigger value="dados">Dados</TabsTrigger>
+                <TabsTrigger value="carteira">Carteira digital</TabsTrigger>
+              </TabsList>
+              <TabsContent value="dados" className="pt-4">
+                <FornecedorForm
+                  fornecedor={editando}
+                  isSubmitting={atualizar.isPending}
+                  onCancel={() => setFormOpen(false)}
+                  onSubmit={(values) =>
+                    atualizar.mutate({ id: editando.id, input: values }, { onSuccess: () => setFormOpen(false) })
+                  }
+                />
+                <Button
+                  variant="ghost"
+                  className="mt-2 w-full text-destructive hover:text-destructive"
+                  onClick={() => setRemovendo(editando)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remover fornecedor
+                </Button>
+              </TabsContent>
+              <TabsContent value="carteira" className="pt-4">
+                <CarteiraTab fornecedorId={editando.id} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <FornecedorForm
+              isSubmitting={criar.isPending}
+              onCancel={() => setFormOpen(false)}
+              onSubmit={(values) => criar.mutate(values, { onSuccess: () => setFormOpen(false) })}
+            />
           )}
         </DialogContent>
       </Dialog>

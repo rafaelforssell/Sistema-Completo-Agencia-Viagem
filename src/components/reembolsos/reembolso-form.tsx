@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { STATUS_REEMBOLSO_OPTIONS } from "@/lib/constants";
+import { FornecedorCombobox } from "@/components/fornecedores/fornecedor-combobox";
+import { DESTINO_REEMBOLSO_OPTIONS, STATUS_REEMBOLSO_OPTIONS } from "@/lib/constants";
 import { reembolsoSchema, type ReembolsoFormValues } from "@/lib/schemas/reembolso";
 import type { Pagamento, Reembolso } from "@/types/entities";
 
@@ -39,6 +40,8 @@ export function ReembolsoForm({ reembolso, pagamentos, onSubmit, isSubmitting, o
     resolver: zodResolver(reembolsoSchema),
     defaultValues: {
       pagamentoId: reembolso?.pagamentoId ?? "",
+      fornecedorId: reembolso?.fornecedorId ?? "",
+      destino: reembolso?.destino ?? "cliente",
       motivo: reembolso?.motivo ?? "",
       valorSolicitado: reembolso?.valorSolicitado ?? 0,
       valorAprovado: reembolso?.valorAprovado,
@@ -48,6 +51,8 @@ export function ReembolsoForm({ reembolso, pagamentos, onSubmit, isSubmitting, o
       observacoes: reembolso?.observacoes ?? "",
     },
   });
+
+  const destino = form.watch("destino");
 
   return (
     <Form {...form}>
@@ -93,6 +98,50 @@ export function ReembolsoForm({ reembolso, pagamentos, onSubmit, isSubmitting, o
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="destino"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Destino do valor</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {DESTINO_REEMBOLSO_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {destino === "carteira_fornecedor" && (
+          <FormField
+            control={form.control}
+            name="fornecedorId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fornecedor</FormLabel>
+                <FormControl>
+                  <FornecedorCombobox value={field.value} onChange={(id) => field.onChange(id)} />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  O crédito entra na carteira digital do fornecedor automaticamente quando o status virar &quot;Pago&quot;.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField

@@ -7,9 +7,12 @@ import { parsePagination, paginatedResponse } from "../../utils/pagination";
 import { toNumber } from "../../utils/decimal";
 
 const statusEnum = z.enum(["solicitado", "em_analise", "aprovado", "pago", "negado"]);
+const destinoEnum = z.enum(["cliente", "carteira_fornecedor"]);
 
-export const reembolsoSchema = z.object({
+const reembolsoBaseSchema = z.object({
   pagamentoId: z.string().uuid().optional().or(z.literal("")),
+  fornecedorId: z.string().optional().or(z.literal("")),
+  destino: destinoEnum,
   motivo: z.string().min(3),
   valorSolicitado: z.number().positive(),
   valorAprovado: z.number().nonnegative().optional(),
@@ -19,9 +22,19 @@ export const reembolsoSchema = z.object({
   observacoes: z.string().optional().or(z.literal("")),
 });
 
+export const reembolsoSchema = reembolsoBaseSchema.refine(
+  (data) => data.destino !== "carteira_fornecedor" || Boolean(data.fornecedorId),
+  {
+    message: "Selecione o fornecedor para creditar o valor na carteira digital.",
+    path: ["fornecedorId"],
+  }
+);
+
 function toData(input: z.infer<typeof reembolsoSchema>) {
   return {
     pagamentoId: input.pagamentoId || null,
+    fornecedorId: input.fornecedorId || null,
+    destino: input.destino,
     motivo: input.motivo,
     valorSolicitado: input.valorSolicitado,
     valorAprovado: input.valorAprovado ?? null,
@@ -37,6 +50,8 @@ export function serializeReembolso(reembolso: Reembolso) {
     id: reembolso.id,
     viagemId: reembolso.viagemId,
     pagamentoId: reembolso.pagamentoId ?? undefined,
+    fornecedorId: reembolso.fornecedorId ?? undefined,
+    destino: reembolso.destino,
     motivo: reembolso.motivo,
     valorSolicitado: toNumber(reembolso.valorSolicitado),
     valorAprovado: toNumber(reembolso.valorAprovado),
@@ -47,6 +62,36 @@ export function serializeReembolso(reembolso: Reembolso) {
     criadoEm: reembolso.criadoEm.toISOString(),
     atualizadoEm: reembolso.atualizadoEm.toISOString(),
   };
+}
+
+// Mantém o CarteiraMovimento (crédito) em sincronia com o reembolso: só existe
+// um movimento quando o reembolso está marcado pra virar crédito no fornecedor
+// E já foi pago. Qualquer outro estado remove o movimento (se existir).
+export async function sincronizarCarteiraDoReembolso(reembolso: Reembolso) {
+  const deveGerarCredito =
+    reembolso.destino === "carteira_fornecedor" && reembolso.fornecedorId && reembolso.status === "pago";
+
+  if (deveGerarCredito) {
+    await prisma.carteiraMovimento.upsert({
+      where: { reembolsoId: reembolso.id },
+      create: {
+        fornecedorId: reembolso.fornecedorId!,
+        tipo: "credito",
+        valor: reembolso.valorAprovado ?? reembolso.valorSolicitado,
+        descricao: reembolso.motivo,
+        data: reembolso.dataConclusao ?? reembolso.dataSolicitacao,
+        reembolsoId: reembolso.id,
+      },
+      update: {
+        fornecedorId: reembolso.fornecedorId!,
+        valor: reembolso.valorAprovado ?? reembolso.valorSolicitado,
+        descricao: reembolso.motivo,
+        data: reembolso.dataConclusao ?? reembolso.dataSolicitacao,
+      },
+    });
+  } else {
+    await prisma.carteiraMovimento.deleteMany({ where: { reembolsoId: reembolso.id } });
+  }
 }
 
 export const reembolsosRouter = Router();
@@ -81,9 +126,11 @@ reembolsosRouter.get(
 reembolsosRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
-    const input = reembolsoSchema.partial().parse(req.body);
+    const input = reembolsoBaseSchema.partial().parse(req.body);
     const data: Prisma.ReembolsoUpdateInput = {};
     if (input.pagamentoId !== undefined) data.pagamento = input.pagamentoId ? { connect: { id: input.pagamentoId } } : { disconnect: true };
+    if (input.fornecedorId !== undefined) data.fornecedor = input.fornecedorId ? { connect: { id: input.fornecedorId } } : { disconnect: true };
+    if (input.destino !== undefined) data.destino = input.destino;
     if (input.motivo !== undefined) data.motivo = input.motivo;
     if (input.valorSolicitado !== undefined) data.valorSolicitado = input.valorSolicitado;
     if (input.valorAprovado !== undefined) data.valorAprovado = input.valorAprovado;
@@ -93,6 +140,7 @@ reembolsosRouter.put(
     if (input.observacoes !== undefined) data.observacoes = input.observacoes || null;
 
     const reembolso = await prisma.reembolso.update({ where: { id: req.params.id }, data });
+    await sincronizarCarteiraDoReembolso(reembolso);
     res.json(serializeReembolso(reembolso));
   })
 );

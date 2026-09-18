@@ -28,6 +28,7 @@ dashboardRouter.get(
       totalClientes,
       viagensAtivas,
       proximosCheckIns,
+      viagensPorStatusRaw,
       clientesComNascimento,
       clientesComPassaporte,
       passageirosComPassaporte,
@@ -42,6 +43,7 @@ dashboardRouter.get(
           dataIda: { gte: hoje, lte: addDays(hoje, CHECKIN_JANELA_DIAS) },
         },
       }),
+      prisma.viagem.groupBy({ by: ["status"], _count: true }),
       prisma.cliente.findMany({ where: { dataNascimento: { not: null } }, select: { dataNascimento: true } }),
       prisma.cliente.findMany({
         where: { validadePassaporte: { not: null } },
@@ -67,6 +69,17 @@ dashboardRouter.get(
       return dias >= 0 && dias <= ANIVERSARIO_JANELA_DIAS;
     }).length;
 
+    const contarPorStatus = (statuses: string[]) =>
+      viagensPorStatusRaw
+        .filter((g) => statuses.includes(g.status))
+        .reduce((soma, g) => soma + g._count, 0);
+
+    const viagensPorStatus = {
+      emCotacao: contarPorStatus(["orcamento"]),
+      emAndamento: contarPorStatus(["confirmada", "em_andamento"]),
+      finalizadas: contarPorStatus(["concluida"]),
+    };
+
     const passaportesClientes = clientesComPassaporte.filter(
       (c) => c.validadePassaporte && diffInDays(c.validadePassaporte, hoje) <= PASSAPORTE_JANELA_DIAS
     ).length;
@@ -77,6 +90,7 @@ dashboardRouter.get(
     res.json({
       totalClientes,
       viagensAtivas,
+      viagensPorStatus,
       proximosCheckIns,
       aniversariantesSemana,
       passaportesVencendoEm30Dias: passaportesClientes + passaportesPassageiros,
@@ -103,7 +117,7 @@ const alertasQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
-  tipo: z.enum(["checkin", "aniversario", "passaporte"]).optional(),
+  tipo: z.enum(["checkin", "aniversario", "passaporte", "termino"]).optional(),
 });
 
 alertasRouter.get(

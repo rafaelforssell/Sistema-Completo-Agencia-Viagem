@@ -27,4 +27,8 @@ export const env = {
   uploadsDir: path.resolve(process.cwd(), process.env.UPLOADS_DIR ?? "uploads"),
   uploadMaxBytes: Number(process.env.UPLOAD_MAX_BYTES ?? 15 * 1024 * 1024),
   publicUrl: withProtocol(process.env.PUBLIC_URL ?? "http://localhost:3333").replace(/\/$/, ""),
+  // Opcional: busca de dados de voo por número (ver módulo integracoes/voo).
+  // Sem essa chave, o endpoint /integracoes/voo continua existindo mas
+  // responde com erro pedindo pra configurar.
+  aviationstackApiKey: process.env.AVIATIONSTACK_API_KEY,
 };
