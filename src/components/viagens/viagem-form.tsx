@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { VooResultadoCard } from "@/components/viagens/voo-resultado-card";
 import { useBuscarVoo } from "@/hooks/use-integracoes";
 import { STATUS_VIAGEM_OPTIONS } from "@/lib/constants";
 import { viagemSchema, type ViagemFormValues } from "@/lib/schemas/viagem";
@@ -89,6 +90,7 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
             <p className="text-xs text-muted-foreground">
               Preenche companhia aérea, destino e data de ida automaticamente — revise antes de salvar.
             </p>
+            {buscarVoo.data && <VooResultadoCard dados={buscarVoo.data} />}
           </div>
         )}
 

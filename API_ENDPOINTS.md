@@ -202,8 +202,20 @@ devem ser criados/removidos direto por aqui (ver seção Reembolsos).
 |---|---|---|
 | GET | `/integracoes/voo/:numero` | Busca dados de um voo pelo número (ex.: `LA3400`) via Aviationstack. Requer `AVIATIONSTACK_API_KEY` configurada no backend — sem ela, responde 400 com mensagem explicando. |
 
-Resposta: `{ numeroVoo, companhiaAerea, aeroportoOrigem, aeroportoDestino, dataIda, horarioPartida, horarioChegada }`.
-Usado no formulário de nova viagem pra pré-preencher `companhiaAerea`, `destino` e `dataIda` a partir do número do voo — o usuário sempre revisa antes de salvar.
+Resposta: além do resumo usado pra pré-preencher a viagem (`numeroVoo`, `companhiaAerea`,
+`aeroportoOrigem`, `aeroportoDestino`, `dataIda`, `horarioPartida`, `horarioChegada`),
+inclui todo o detalhe que a Aviationstack retorna, só pra exibição/conferência
+(não é salvo na viagem): `status` (`scheduled` \| `active` \| `landed` \|
+`cancelled` \| `incident` \| `diverted`), `companhia` (`{ nome, iata?, icao? }`),
+`voo` (`{ numero, iata, icao? }`), `aeronave?` (`{ registro?, tipoIata?, tipoIcao? }`),
+`partida`/`chegada` (`{ aeroporto, iata, icao?, terminal?, portao?, bagagem?,
+atrasoMinutos?, horarioPrevisto, horarioEstimado?, horarioReal? }`), e
+`posicaoAtual?` (posição/altitude/velocidade em tempo real, só quando o voo está
+no ar — no plano gratuito costuma vir vazio).
+
+Usado no formulário de nova viagem pra pré-preencher `companhiaAerea`, `destino`
+e `dataIda` a partir do número do voo — o usuário sempre revisa antes de salvar.
+O detalhe completo aparece num card de conferência abaixo da busca.
 
 ## Vendas
 
