@@ -34,6 +34,7 @@ import {
 } from "@/components/vendas/venda-itens-fields";
 import { useCliente } from "@/hooks/use-clientes";
 import { STATUS_VIAGEM_OPTIONS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import {
   viagemCriacaoSchema,
   viagemEdicaoSchema,
@@ -49,6 +50,10 @@ interface ViagemFormProps {
   onSubmit: (values: ViagemInput) => void;
   isSubmitting?: boolean;
   onCancel?: () => void;
+  // Página inteira: duas colunas em telas grandes (viagem e voos à
+  // esquerda; passageiros, venda e comissão à direita) e botões fixos no
+  // rodapé, pra caber tudo numa tela só.
+  duasColunas?: boolean;
 }
 
 function hojeISO() {
@@ -73,7 +78,7 @@ function derivarDosTrechos(trechos: TrechoFormValues[]) {
   };
 }
 
-export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCancel }: ViagemFormProps) {
+export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCancel, duasColunas }: ViagemFormProps) {
   const criando = !viagem;
   const form = useForm<ViagemFormValues>({
     resolver: (criando
@@ -176,208 +181,222 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <Secao titulo="Dados da viagem">
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
+        <div className={cn("space-y-6", duasColunas && "xl:grid xl:grid-cols-2 xl:items-start xl:gap-8 xl:space-y-0")}>
+          <div className="min-w-0 space-y-6">
+            <Secao titulo="Dados da viagem">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
+                <FormField
+                  control={form.control}
+                  name="clienteId"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2 lg:col-span-3">
+                      <FormLabel>Cliente principal</FormLabel>
+                      <FormControl>
+                        {clienteFixo ? (
+                          <Input value={clienteFixo.nome} disabled />
+                        ) : (
+                          <ClienteCombobox value={field.value} onChange={(id) => field.onChange(id)} />
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="destino"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2 lg:col-span-3">
+                      <FormLabel>Destino</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Lisboa, Portugal" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className={cn("lg:col-span-1", duasColunas && "xl:col-span-2")}>
+                      <FormLabel>Status</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {STATUS_VIAGEM_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="localizador"
+                  render={({ field }) => (
+                    <FormItem className={cn("lg:col-span-1", duasColunas && "xl:col-span-2")}>
+                      <FormLabel>Localizador</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex.: ABC123" className="uppercase" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="companhiaAerea"
+                  render={({ field }) => (
+                    <FormItem className="lg:col-span-2">
+                      <FormLabel>Companhia aérea</FormLabel>
+                      <FormControl>
+                        <Input placeholder="TAP, LATAM..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="dataIda"
+                  render={({ field }) => (
+                    <FormItem className={cn("lg:col-span-1", duasColunas && "xl:col-span-3")}>
+                      <FormLabel>Data de ida</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="dataVolta"
+                  render={({ field }) => (
+                    <FormItem className={cn("lg:col-span-1", duasColunas && "xl:col-span-3")}>
+                      <FormLabel>Data de volta</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Datas e companhia são preenchidas automaticamente a partir dos voos abaixo — dá para ajustar à mão.
+              </p>
+            </Secao>
+
+            <TrechosFields form={form} />
+          </div>
+          <div className="min-w-0 space-y-6">
+            {criando && (
+              <PassageirosFields
+                form={form}
+                nomeCliente={clienteSelecionado?.nome ?? clienteFixo?.nome}
+                largo={!duasColunas}
+              />
+            )}
+
+            {criando && (
+              <Secao
+                titulo="Venda"
+                descricao="A venda é criada automaticamente junto com a viagem e aparece em Vendas."
+              >
+                <FormField
+                  control={form.control}
+                  name="dataVenda"
+                  render={({ field }) => (
+                    <FormItem className="max-w-xs">
+                      <FormLabel>Data da venda</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <VendaItensFields form={form as unknown as UseFormReturn<VendaItensShape>} />
+                <NumerosPedidoExtrasFields form={form as unknown as UseFormReturn<VendaItensShape>} />
+                <FormField
+                  control={form.control}
+                  name="vendaObservacoes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Observações da venda</FormLabel>
+                      <FormControl>
+                        <Textarea rows={2} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Secao>
+            )}
+
+            <Secao titulo="Comissão">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="comissaoValor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor da comissão</FormLabel>
+                      <FormControl>
+                        <CurrencyInput {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="comissaoFornecedor"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fornecedor (opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Operadora, companhia..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </Secao>
+
             <FormField
               control={form.control}
-              name="clienteId"
+              name="observacoes"
               render={({ field }) => (
-                <FormItem className="sm:col-span-2 lg:col-span-3">
-                  <FormLabel>Cliente principal</FormLabel>
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
                   <FormControl>
-                    {clienteFixo ? (
-                      <Input value={clienteFixo.nome} disabled />
-                    ) : (
-                      <ClienteCombobox value={field.value} onChange={(id) => field.onChange(id)} />
-                    )}
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="destino"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-2 lg:col-span-3">
-                  <FormLabel>Destino</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Lisboa, Portugal" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem className="lg:col-span-1">
-                  <FormLabel>Status</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {STATUS_VIAGEM_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="localizador"
-              render={({ field }) => (
-                <FormItem className="lg:col-span-1">
-                  <FormLabel>Localizador da reserva</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex.: ABC123" className="uppercase" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="companhiaAerea"
-              render={({ field }) => (
-                <FormItem className="lg:col-span-2">
-                  <FormLabel>Companhia aérea</FormLabel>
-                  <FormControl>
-                    <Input placeholder="TAP, LATAM..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dataIda"
-              render={({ field }) => (
-                <FormItem className="lg:col-span-1">
-                  <FormLabel>Data de ida</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dataVolta"
-              render={({ field }) => (
-                <FormItem className="lg:col-span-1">
-                  <FormLabel>Data de volta</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
+                    <Textarea rows={3} placeholder="Roteiro, hospedagem, detalhes relevantes..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <p className="text-xs text-muted-foreground">
-            Datas e companhia são preenchidas automaticamente a partir dos voos abaixo — dá para ajustar à mão.
-          </p>
-        </Secao>
+        </div>
 
-        <TrechosFields form={form} />
-
-        {criando && (
-          <PassageirosFields form={form} nomeCliente={clienteSelecionado?.nome ?? clienteFixo?.nome} />
-        )}
-
-        {criando && (
-          <Secao
-            titulo="Venda"
-            descricao="A venda é criada automaticamente junto com a viagem e aparece em Vendas."
-          >
-            <FormField
-              control={form.control}
-              name="dataVenda"
-              render={({ field }) => (
-                <FormItem className="max-w-xs">
-                  <FormLabel>Data da venda</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <VendaItensFields form={form as unknown as UseFormReturn<VendaItensShape>} />
-            <NumerosPedidoExtrasFields form={form as unknown as UseFormReturn<VendaItensShape>} />
-            <FormField
-              control={form.control}
-              name="vendaObservacoes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações da venda</FormLabel>
-                  <FormControl>
-                    <Textarea rows={2} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </Secao>
-        )}
-
-        <Secao titulo="Comissão">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="comissaoValor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor da comissão</FormLabel>
-                  <FormControl>
-                    <CurrencyInput {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="comissaoFornecedor"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fornecedor (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Operadora, companhia..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </Secao>
-
-        <FormField
-          control={form.control}
-          name="observacoes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Observações</FormLabel>
-              <FormControl>
-                <Textarea rows={3} placeholder="Roteiro, hospedagem, detalhes relevantes..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+        <div
+          className={cn(
+            "flex justify-end gap-2 pt-1",
+            duasColunas && "sticky bottom-0 z-10 -mx-6 border-t border-border bg-card px-6 py-3"
           )}
-        />
-
-        <div className="flex justify-end gap-2 pt-1">
+        >
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
@@ -405,7 +424,16 @@ function Secao({ titulo, descricao, children }: { titulo: string; descricao?: st
   );
 }
 
-function PassageirosFields({ form, nomeCliente }: { form: UseFormReturn<ViagemFormValues>; nomeCliente?: string }) {
+function PassageirosFields({
+  form,
+  nomeCliente,
+  largo,
+}: {
+  form: UseFormReturn<ViagemFormValues>;
+  nomeCliente?: string;
+  // 4 colunas quando o formulário ocupa a largura toda; 2 na coluna lateral.
+  largo?: boolean;
+}) {
   const passageiros = useFieldArray({ control: form.control, name: "passageiros" });
 
   return (
@@ -458,7 +486,7 @@ function PassageirosFields({ form, nomeCliente }: { form: UseFormReturn<ViagemFo
           <PassageiroCampos
             form={form as unknown as UseFormReturn<PassageiroFormValues>}
             prefixo={`passageiros.${index}.`}
-            largo
+            largo={largo}
             enderecoRecolhido
           />
         </div>
