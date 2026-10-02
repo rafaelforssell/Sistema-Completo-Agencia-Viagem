@@ -35,7 +35,7 @@ export function VendaItensFields({
   const itensValues = form.watch("itens");
   const valorTotal = useMemo(
     () => (itensValues ?? []).reduce((soma, item) => soma + (Number(item?.valor) || 0), 0),
-    [itensValues]
+    [itensValues],
   );
   const tiposPresentes = new Set((itensValues ?? []).map((item) => item?.tipo));
 
@@ -94,7 +94,9 @@ export function VendaItensFields({
                 </Button>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              {/* Fornecedor, valor e descrição na mesma linha em telas grandes,
+                  pra lista de itens não crescer tanto. */}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,2fr)]">
                 <FormField
                   control={form.control}
                   name={`itens.${index}.fornecedorId`}
@@ -121,21 +123,20 @@ export function VendaItensFields({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name={`itens.${index}.descricao`}
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2 lg:col-span-1">
+                      <FormLabel className="text-xs">Descrição</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Detalhes desse item..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-
-              <FormField
-                control={form.control}
-                name={`itens.${index}.descricao`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Descrição</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Detalhes desse item..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {tipoItem === "aluguel_carro" && (
                 <div className="grid gap-3 sm:grid-cols-2">

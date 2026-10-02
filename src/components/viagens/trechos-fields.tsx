@@ -33,14 +33,7 @@ type CampoTrecho = `trechos.${number}.${Exclude<keyof TrechoFormValues, "sentido
 // Itinerário da viagem, separado em Ida e Volta. Cada voo é um trecho; uma
 // conexão é o voo seguinte no mesmo sentido, saindo de onde o anterior
 // chegou. A busca por nº do voo preenche o trecho; tudo continua editável.
-export function TrechosFields({
-  form,
-  estreito = false,
-}: {
-  form: UseFormReturn<ViagemFormValues>;
-  // Coluna estreita (página em 3 colunas): partida e chegada um embaixo do outro.
-  estreito?: boolean;
-}) {
+export function TrechosFields({ form }: { form: UseFormReturn<ViagemFormValues> }) {
   const trechos = useFieldArray({ control: form.control, name: "trechos" });
   const valores = form.watch("trechos") ?? [];
   const buscarVoo = useBuscarVoo();
@@ -147,7 +140,7 @@ export function TrechosFields({
                     onClick={() => alternarDetalhes(id)}
                     aria-expanded={aberto}
                   >
-                    {estreito ? "Detalhes" : "Mais detalhes"}
+                    Mais detalhes
                     <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} />
                   </Button>
                   <Button
@@ -161,7 +154,7 @@ export function TrechosFields({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className={cn("grid gap-2", !estreito && "sm:grid-cols-2")}>
+                <div className="grid gap-2 sm:grid-cols-2">
                   <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-end gap-2">
                     <Campo form={form} name={`trechos.${index}.origemIata`} label="Partida" placeholder="GRU" />
                     <Campo
@@ -183,12 +176,7 @@ export function TrechosFields({
                 </div>
 
                 {aberto && (
-                  <div
-                    className={cn(
-                      "grid gap-2 border-t border-border pt-2",
-                      estreito ? "grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-4",
-                    )}
-                  >
+                  <div className="grid gap-2 border-t border-border pt-2 sm:grid-cols-2 lg:grid-cols-4">
                     <Campo form={form} name={`trechos.${index}.companhia`} label="Companhia" />
                     <Campo form={form} name={`trechos.${index}.origemAeroporto`} label="Aeroporto de partida" />
                     <Campo form={form} name={`trechos.${index}.destinoAeroporto`} label="Aeroporto de chegada" />
