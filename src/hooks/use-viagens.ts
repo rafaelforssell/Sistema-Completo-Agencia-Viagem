@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { passageirosApi, viagensApi, ViagensFiltro } from "@/lib/api/viagens";
 import { clientesKeys } from "@/hooks/use-clientes";
+import { comissoesKeys } from "@/hooks/use-comissoes";
+import { vendasKeys } from "@/hooks/use-vendas";
 import { ApiError } from "@/lib/http";
 import type { PassageiroInput, ViagemInput } from "@/types/entities";
 
@@ -9,6 +11,9 @@ export const viagensKeys = {
   all: ["viagens"] as const,
   lista: (params?: ViagensFiltro) => [...viagensKeys.all, "lista", params] as const,
   detalhe: (id: string) => [...viagensKeys.all, "detalhe", id] as const,
+  // Debaixo do detalhe: tudo que invalida a viagem (pagamentos, passageiros...)
+  // também atualiza o resumo.
+  resumo: (id: string) => [...viagensKeys.detalhe(id), "resumo"] as const,
 };
 
 export function useViagens(params?: ViagensFiltro) {
@@ -27,13 +32,27 @@ export function useViagem(id: string | undefined) {
   });
 }
 
+export function useViagemResumo(id: string | undefined) {
+  return useQuery({
+    queryKey: viagensKeys.resumo(id ?? ""),
+    queryFn: () => viagensApi.resumo(id as string),
+    enabled: Boolean(id),
+  });
+}
+
 export function useCriarViagem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: ViagemInput) => viagensApi.criar(input),
     onSuccess: () => {
+      // A viagem nasce com venda, comissão e passageiros (que podem virar
+      // clientes novos) — tudo isso precisa aparecer atualizado.
       queryClient.invalidateQueries({ queryKey: viagensKeys.all });
-      toast.success("Viagem cadastrada com sucesso.");
+      queryClient.invalidateQueries({ queryKey: vendasKeys.all });
+      queryClient.invalidateQueries({ queryKey: comissoesKeys.all });
+      queryClient.invalidateQueries({ queryKey: clientesKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "metricas"] });
+      toast.success("Viagem cadastrada e enviada para Vendas.");
     },
     onError: (error: ApiError) => toast.error(error.message),
   });
@@ -45,6 +64,9 @@ export function useAtualizarViagem(id: string) {
     mutationFn: (input: Partial<ViagemInput>) => viagensApi.atualizar(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: viagensKeys.all });
+      queryClient.invalidateQueries({ queryKey: vendasKeys.all });
+      queryClient.invalidateQueries({ queryKey: comissoesKeys.all });
+      queryClient.invalidateQueries({ queryKey: clientesKeys.all });
       toast.success("Viagem atualizada com sucesso.");
     },
     onError: (error: ApiError) => toast.error(error.message),

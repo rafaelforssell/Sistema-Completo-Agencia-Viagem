@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import type { NumeroPedidoExtra, Prisma, StatusVenda, TipoVenda, Venda, VendaItem } from "@prisma/client";
+import type { NumeroPedidoExtra, Prisma, PrismaClient, StatusVenda, TipoVenda, Venda, VendaItem } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { HttpError } from "../../lib/http-error";
 import { asyncHandler } from "../../middleware/async-handler";
@@ -21,12 +21,12 @@ const TIPO_VENDA = [
 ] as const;
 const STATUS_VENDA = ["orcamento", "confirmada", "cancelada"] as const;
 
-const numeroPedidoExtraSchema = z.object({
+export const numeroPedidoExtraSchema = z.object({
   numero: z.string().min(1, "Informe o número."),
   descricao: z.string().optional().or(z.literal("")),
 });
 
-const vendaItemSchema = z.object({
+export const vendaItemSchema = z.object({
   tipo: z.enum(TIPO_VENDA),
   fornecedorId: z.string().optional().or(z.literal("")),
   descricao: z.string().optional().or(z.literal("")),
@@ -45,9 +45,9 @@ const vendaSchema = z.object({
   itens: z.array(vendaItemSchema).min(1, "Adicione ao menos um item à venda."),
 });
 
-type VendaCompleta = Venda & { numeroPedidoExtras: NumeroPedidoExtra[]; itens: VendaItem[] };
+export type VendaCompleta = Venda & { numeroPedidoExtras: NumeroPedidoExtra[]; itens: VendaItem[] };
 
-function serializeVenda(venda: VendaCompleta) {
+export function serializeVenda(venda: VendaCompleta) {
   const itens = venda.itens.map((item) => ({
     id: item.id,
     tipo: item.tipo,
@@ -78,7 +78,7 @@ function serializeVenda(venda: VendaCompleta) {
   };
 }
 
-function toItemData(item: z.infer<typeof vendaItemSchema>) {
+export function toItemData(item: z.infer<typeof vendaItemSchema>) {
   return {
     tipo: item.tipo,
     fornecedorId: item.fornecedorId || null,
@@ -89,8 +89,8 @@ function toItemData(item: z.infer<typeof vendaItemSchema>) {
   };
 }
 
-async function gerarNumeroPedido(): Promise<string> {
-  const total = await prisma.venda.count();
+export async function gerarNumeroPedido(db: Prisma.TransactionClient | PrismaClient = prisma): Promise<string> {
+  const total = await db.venda.count();
   return `PED-${String(total + 1).padStart(6, "0")}`;
 }
 

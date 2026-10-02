@@ -30,3 +30,11 @@ export function nextAnniversary(date: Date, from: Date): Date {
   }
   return next;
 }
+
+// "Hoje" do ponto de vista da agência (horário de Brasília), como meia-noite
+// UTC — o mesmo formato das datas de calendário salvas no banco. Sem isso,
+// a partir das 21h o servidor (em UTC) já consideraria o dia seguinte.
+export function hojeCalendario(timeZone = "America/Sao_Paulo"): Date {
+  const [ano, mes, dia] = new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date()).split("-").map(Number);
+  return new Date(Date.UTC(ano, mes - 1, dia));
+}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
@@ -24,7 +23,6 @@ import {
 } from "@/components/ui/select";
 import { ViagemCombobox } from "@/components/viagens/viagem-combobox";
 import { STATUS_COMISSAO_OPTIONS } from "@/lib/constants";
-import { formatCurrency } from "@/lib/format";
 import { comissaoSchema, type ComissaoFormValues } from "@/lib/schemas/comissao";
 import type { Comissao } from "@/types/entities";
 
@@ -41,20 +39,12 @@ export function ComissaoForm({ comissao, onSubmit, isSubmitting, onCancel }: Com
     defaultValues: {
       viagemId: comissao?.viagemId ?? "",
       fornecedor: comissao?.fornecedor ?? "",
-      percentual: comissao?.percentual ?? 10,
-      valorBruto: comissao?.valorBruto ?? 0,
+      valor: comissao?.valor ?? 0,
       status: comissao?.status ?? "pendente",
       dataPrevista: comissao?.dataPrevista?.slice(0, 10) ?? "",
       dataRecebimento: comissao?.dataRecebimento?.slice(0, 10) ?? "",
     },
   });
-
-  const percentual = form.watch("percentual");
-  const valorBruto = form.watch("valorBruto");
-  const valorLiquidoEstimado = useMemo(
-    () => (Number(valorBruto) || 0) * (1 - (Number(percentual) || 0) / 100),
-    [valorBruto, percentual]
-  );
 
   return (
     <Form {...form}>
@@ -78,7 +68,7 @@ export function ComissaoForm({ comissao, onSubmit, isSubmitting, onCancel }: Com
           name="fornecedor"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Fornecedor</FormLabel>
+              <FormLabel>Fornecedor (opcional)</FormLabel>
               <FormControl>
                 <Input placeholder="Companhia aérea, operadora..." {...field} />
               </FormControl>
@@ -87,39 +77,19 @@ export function ComissaoForm({ comissao, onSubmit, isSubmitting, onCancel }: Com
           )}
         />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="valorBruto"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Valor bruto</FormLabel>
-                <FormControl>
-                  <CurrencyInput {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="percentual"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Percentual (%)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.1" min="0" max="100" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-          Valor líquido estimado: <span className="font-medium text-foreground">{formatCurrency(valorLiquidoEstimado)}</span>
-        </p>
-        <p className="text-xs text-muted-foreground">O valor líquido final é calculado e confirmado pelo servidor.</p>
+        <FormField
+          control={form.control}
+          name="valor"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Valor da comissão</FormLabel>
+              <FormControl>
+                <CurrencyInput {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField

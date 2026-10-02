@@ -49,3 +49,19 @@ export function initials(name: string): string {
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 }
+
+// Horário de voo: salvo como o horário local do aeroporto (em "UTC"), então
+// é formatado em UTC pra mostrar exatamente o que está no bilhete.
+export function formatHorarioVoo(value: string | undefined | null): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}

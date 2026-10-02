@@ -22,6 +22,8 @@ import { ReembolsosTab } from "@/components/reembolsos/reembolsos-tab";
 import { PassageirosTab } from "@/components/viagens/passageiros-tab";
 import { ViagemForm } from "@/components/viagens/viagem-form";
 import { VoucherTab } from "@/components/viagens/voucher-tab";
+import { VendaTab } from "@/components/viagens/venda-tab";
+import { Itinerario, ViagemResumo } from "@/components/viagens/viagem-resumo";
 import { useAtualizarViagem, useRemoverViagem, useViagem } from "@/hooks/use-viagens";
 import { STATUS_VIAGEM_LABEL } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
@@ -78,14 +80,45 @@ export default function ViagemDetalhePage() {
         }
       />
 
-      <Tabs defaultValue="passageiros">
-        <TabsList>
+      <Tabs defaultValue="resumo">
+        <TabsList className="h-auto flex-wrap">
+          <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="voos">Voos</TabsTrigger>
           <TabsTrigger value="passageiros">Passageiros</TabsTrigger>
+          <TabsTrigger value="venda">Venda</TabsTrigger>
           <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
           <TabsTrigger value="reembolsos">Reembolsos</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
           <TabsTrigger value="voucher">Voucher</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="resumo" className="pt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <ViagemResumo viagemId={viagem.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="voos" className="pt-4">
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              <Itinerario trechos={viagem.trechos ?? []} />
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4" />
+                Editar voos
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="venda" className="pt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <VendaTab viagem={viagem} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="passageiros" className="pt-4">
           <Card>
@@ -125,7 +158,7 @@ export default function ViagemDetalhePage() {
       </Tabs>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-lg">
+        <SheetContent className="overflow-y-auto sm:max-w-2xl">
           <SheetHeader>
             <SheetTitle>Editar viagem</SheetTitle>
           </SheetHeader>

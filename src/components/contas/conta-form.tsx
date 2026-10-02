@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   Select,
@@ -48,6 +49,7 @@ export function ContaForm({ conta, onSubmit, isSubmitting, onCancel }: ContaForm
       vencimento: conta?.vencimento?.slice(0, 10) ?? "",
       status: conta?.status ?? "pendente",
       fonte: conta?.fonte ?? "",
+      observacoes: conta?.observacoes ?? "",
     },
   });
 
@@ -242,6 +244,20 @@ export function ContaForm({ conta, onSubmit, isSubmitting, onCancel }: ContaForm
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="observacoes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Observações</FormLabel>
+              <FormControl>
+                <Textarea rows={3} placeholder="Combinados com o cliente, forma de cobrança, lembretes..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="outline" onClick={onCancel}>

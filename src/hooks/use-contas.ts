@@ -30,6 +30,7 @@ export function useCriarConta() {
     mutationFn: (input: ContaInput) => contasApi.criar(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contasKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Conta cadastrada.");
     },
     onError: (error: ApiError) => toast.error(error.message),
@@ -43,6 +44,7 @@ export function useAtualizarConta() {
       contasApi.atualizar(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contasKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Conta atualizada.");
     },
     onError: (error: ApiError) => toast.error(error.message),
@@ -55,6 +57,7 @@ export function useRemoverConta() {
     mutationFn: (id: string) => contasApi.remover(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contasKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Conta removida.");
     },
     onError: (error: ApiError) => toast.error(error.message),

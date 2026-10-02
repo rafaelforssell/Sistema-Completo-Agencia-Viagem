@@ -23,6 +23,7 @@ export function useCriarComissao() {
     mutationFn: (input: ComissaoInput) => comissoesApi.criar(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comissoesKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Comissão cadastrada.");
     },
     onError: (error: ApiError) => toast.error(error.message),
@@ -36,6 +37,7 @@ export function useAtualizarComissao() {
       comissoesApi.atualizar(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comissoesKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Comissão atualizada.");
     },
     onError: (error: ApiError) => toast.error(error.message),
@@ -48,6 +50,7 @@ export function useRemoverComissao() {
     mutationFn: (id: string) => comissoesApi.remover(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comissoesKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Comissão removida.");
     },
     onError: (error: ApiError) => toast.error(error.message),

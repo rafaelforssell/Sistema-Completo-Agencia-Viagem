@@ -24,6 +24,11 @@ export const contaColumns: ColumnDef<ContaFinanceira>[] = [
           {row.original.origemNome}
           {row.original.contabilizavel === false && " · só agenda, não conta no total"}
         </p>
+        {row.original.observacoes && (
+          <p className="truncate text-xs italic text-muted-foreground" title={row.original.observacoes}>
+            {row.original.observacoes}
+          </p>
+        )}
       </div>
     ),
   },

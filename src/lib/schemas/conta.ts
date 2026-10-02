@@ -11,6 +11,7 @@ export const contaSchema = z.object({
   vencimento: z.string().min(1, "Informe o vencimento."),
   status: z.enum(["pendente", "pago", "atrasado", "cancelado"]),
   fonte: z.string().optional().or(z.literal("")),
+  observacoes: z.string().optional().or(z.literal("")),
 });
 
 export type ContaFormValues = z.infer<typeof contaSchema>;

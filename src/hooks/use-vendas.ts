@@ -32,6 +32,7 @@ export function useCriarVenda() {
     mutationFn: (input: VendaInput) => vendasApi.criar(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendasKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Venda cadastrada.");
     },
     onError: (error: ApiError) => toast.error(error.message),
@@ -45,6 +46,7 @@ export function useAtualizarVenda() {
       vendasApi.atualizar(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendasKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Venda atualizada.");
     },
     onError: (error: ApiError) => toast.error(error.message),
@@ -57,6 +59,7 @@ export function useRemoverVenda() {
     mutationFn: (id: string) => vendasApi.remover(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: vendasKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["viagens"] });
       toast.success("Venda removida.");
     },
     onError: (error: ApiError) => toast.error(error.message),

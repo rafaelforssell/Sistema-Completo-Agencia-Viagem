@@ -8,26 +8,19 @@ import { toNumber } from "../../utils/decimal";
 
 const comissaoSchema = z.object({
   viagemId: z.string().uuid(),
-  fornecedor: z.string().min(2),
-  percentual: z.number().min(0).max(100),
-  valorBruto: z.number().positive(),
+  fornecedor: z.string().optional().or(z.literal("")),
+  valor: z.number().positive(),
   status: z.enum(["pendente", "recebida", "cancelada"]),
   dataPrevista: z.string().optional().or(z.literal("")),
   dataRecebimento: z.string().optional().or(z.literal("")),
 });
 
-function calcularValorLiquido(valorBruto: number, percentual: number) {
-  return Math.round(valorBruto * (1 - percentual / 100) * 100) / 100;
-}
-
 export function serializeComissao(comissao: Comissao) {
   return {
     id: comissao.id,
     viagemId: comissao.viagemId,
-    fornecedor: comissao.fornecedor,
-    percentual: toNumber(comissao.percentual),
-    valorBruto: toNumber(comissao.valorBruto),
-    valorLiquido: toNumber(comissao.valorLiquido),
+    fornecedor: comissao.fornecedor ?? undefined,
+    valor: toNumber(comissao.valor) ?? 0,
     status: comissao.status,
     dataPrevista: comissao.dataPrevista?.toISOString(),
     dataRecebimento: comissao.dataRecebimento?.toISOString(),
@@ -72,10 +65,8 @@ comissoesRouter.post(
     const comissao = await prisma.comissao.create({
       data: {
         viagemId: input.viagemId,
-        fornecedor: input.fornecedor,
-        percentual: input.percentual,
-        valorBruto: input.valorBruto,
-        valorLiquido: calcularValorLiquido(input.valorBruto, input.percentual),
+        fornecedor: input.fornecedor || null,
+        valor: input.valor,
         status: input.status,
         dataPrevista: input.dataPrevista ? new Date(input.dataPrevista) : null,
         dataRecebimento: input.dataRecebimento ? new Date(input.dataRecebimento) : null,
@@ -89,18 +80,10 @@ comissoesRouter.put(
   "/:id",
   asyncHandler(async (req, res) => {
     const input = comissaoSchema.partial().parse(req.body);
-    const atual = await prisma.comissao.findUniqueOrThrow({ where: { id: req.params.id } });
-
-    const valorBruto = input.valorBruto ?? Number(atual.valorBruto);
-    const percentual = input.percentual ?? Number(atual.percentual);
-
-    const data: Prisma.ComissaoUpdateInput = {
-      valorLiquido: calcularValorLiquido(valorBruto, percentual),
-    };
+    const data: Prisma.ComissaoUpdateInput = {};
     if (input.viagemId !== undefined) data.viagem = { connect: { id: input.viagemId } };
-    if (input.fornecedor !== undefined) data.fornecedor = input.fornecedor;
-    if (input.percentual !== undefined) data.percentual = input.percentual;
-    if (input.valorBruto !== undefined) data.valorBruto = input.valorBruto;
+    if (input.fornecedor !== undefined) data.fornecedor = input.fornecedor || null;
+    if (input.valor !== undefined) data.valor = input.valor;
     if (input.status !== undefined) data.status = input.status;
     if (input.dataPrevista !== undefined) data.dataPrevista = input.dataPrevista ? new Date(input.dataPrevista) : null;
     if (input.dataRecebimento !== undefined) data.dataRecebimento = input.dataRecebimento ? new Date(input.dataRecebimento) : null;

@@ -6,6 +6,21 @@ import { asyncHandler } from "../../middleware/async-handler";
 import { parsePagination, paginatedResponse } from "../../utils/pagination";
 import { toNumber } from "../../utils/decimal";
 import { serializeCliente } from "../clientes/clientes.routes";
+import { addDays, hojeCalendario } from "../../utils/dates";
+
+// Contas a receber que ainda não entraram, vencendo em um dia específico.
+function recebiveisDoDia(dia: Date) {
+  return prisma.contaFinanceira.aggregate({
+    where: {
+      natureza: "a_receber",
+      status: { in: ["pendente", "atrasado"] },
+      contabilizavel: true,
+      vencimento: { gte: dia, lt: addDays(dia, 1) },
+    },
+    _sum: { valor: true },
+    _count: true,
+  });
+}
 
 const contaSchema = z.object({
   natureza: z.enum(["a_pagar", "a_receber"]),
@@ -18,6 +33,7 @@ const contaSchema = z.object({
   vencimento: z.string().min(1),
   status: z.enum(["pendente", "pago", "atrasado", "cancelado"]),
   fonte: z.string().optional().or(z.literal("")),
+  observacoes: z.string().optional().or(z.literal("")),
 });
 
 function toData(input: z.infer<typeof contaSchema>) {
@@ -32,6 +48,7 @@ function toData(input: z.infer<typeof contaSchema>) {
     vencimento: new Date(input.vencimento),
     status: input.status,
     fonte: input.fonte || null,
+    observacoes: input.observacoes || null,
   };
 }
 
@@ -49,6 +66,7 @@ export function serializeConta(conta: ContaFinanceira & { cliente?: Cliente | nu
     vencimento: conta.vencimento.toISOString(),
     status: conta.status,
     fonte: conta.fonte ?? undefined,
+    observacoes: conta.observacoes ?? undefined,
     contabilizavel: conta.contabilizavel,
     criadoEm: conta.criadoEm.toISOString(),
     atualizadoEm: conta.atualizadoEm.toISOString(),
@@ -98,7 +116,8 @@ contasRouter.get(
 contasRouter.get(
   "/resumo",
   asyncHandler(async (_req, res) => {
-    const [aPagar, aReceber, atrasado, porFonte] = await Promise.all([
+    const hoje = hojeCalendario();
+    const [aPagar, aReceber, atrasado, porFonte, recebeHoje, recebeAmanha] = await Promise.all([
       prisma.contaFinanceira.aggregate({
         where: { natureza: "a_pagar", status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
@@ -116,6 +135,8 @@ contasRouter.get(
         where: { fonte: { not: null }, status: { not: "cancelado" }, contabilizavel: true },
         _sum: { valor: true },
       }),
+      recebiveisDoDia(hoje),
+      recebiveisDoDia(addDays(hoje, 1)),
     ]);
 
     res.json({
@@ -126,6 +147,8 @@ contasRouter.get(
         fonte: item.fonte ?? "Outros",
         saldo: toNumber(item._sum.valor) ?? 0,
       })),
+      recebiveisHoje: { total: toNumber(recebeHoje._sum.valor) ?? 0, quantidade: recebeHoje._count },
+      recebiveisAmanha: { total: toNumber(recebeAmanha._sum.valor) ?? 0, quantidade: recebeAmanha._count },
     });
   })
 );
@@ -161,6 +184,7 @@ contasRouter.put(
     if (input.vencimento !== undefined) data.vencimento = new Date(input.vencimento);
     if (input.status !== undefined) data.status = input.status;
     if (input.fonte !== undefined) data.fonte = input.fonte || null;
+    if (input.observacoes !== undefined) data.observacoes = input.observacoes || null;
 
     const conta = await prisma.contaFinanceira.update({
       where: { id: req.params.id },

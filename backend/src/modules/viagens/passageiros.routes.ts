@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import type { Passageiro, Prisma } from "@prisma/client";
+import type { Passageiro, Prisma, PrismaClient } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { asyncHandler } from "../../middleware/async-handler";
 
@@ -49,14 +49,17 @@ passageirosRouter.get(
 // aparecer na aba Clientes). Evita duplicar: se já existir um cliente com o
 // mesmo número de passaporte, ou com o mesmo nome (sem diferenciar
 // maiúsculas/minúsculas), reaproveita esse cadastro em vez de criar outro.
-async function garantirClienteParaPassageiro(input: z.infer<typeof passageiroSchema>) {
+export async function garantirClienteParaPassageiro(
+  input: z.infer<typeof passageiroSchema>,
+  db: Prisma.TransactionClient | PrismaClient = prisma
+) {
   const existente = input.numeroPassaporte
-    ? await prisma.cliente.findFirst({ where: { numeroPassaporte: input.numeroPassaporte } })
-    : await prisma.cliente.findFirst({ where: { nome: { equals: input.nome, mode: "insensitive" } } });
+    ? await db.cliente.findFirst({ where: { numeroPassaporte: input.numeroPassaporte } })
+    : await db.cliente.findFirst({ where: { nome: { equals: input.nome, mode: "insensitive" } } });
 
   if (existente) return existente;
 
-  return prisma.cliente.create({
+  return db.cliente.create({
     data: {
       nome: input.nome,
       email: input.email || null,
@@ -68,6 +71,19 @@ async function garantirClienteParaPassageiro(input: z.infer<typeof passageiroSch
   });
 }
 
+export function passageiroToData(input: z.infer<typeof passageiroSchema>) {
+  return {
+    nome: input.nome,
+    parentesco: input.parentesco || null,
+    email: input.email || null,
+    telefone: input.telefone || null,
+    dataNascimento: input.dataNascimento ? new Date(input.dataNascimento) : null,
+    numeroPassaporte: input.numeroPassaporte || null,
+    validadePassaporte: input.validadePassaporte ? new Date(input.validadePassaporte) : null,
+    numeroBilhete: input.numeroBilhete || null,
+  };
+}
+
 passageirosRouter.post(
   "/",
   asyncHandler(async (req, res) => {
@@ -75,17 +91,7 @@ passageirosRouter.post(
     await garantirClienteParaPassageiro(input);
 
     const passageiro = await prisma.passageiro.create({
-      data: {
-        viagemId: req.params.viagemId,
-        nome: input.nome,
-        parentesco: input.parentesco || null,
-        email: input.email || null,
-        telefone: input.telefone || null,
-        dataNascimento: input.dataNascimento ? new Date(input.dataNascimento) : null,
-        numeroPassaporte: input.numeroPassaporte || null,
-        validadePassaporte: input.validadePassaporte ? new Date(input.validadePassaporte) : null,
-        numeroBilhete: input.numeroBilhete || null,
-      },
+      data: { viagemId: req.params.viagemId, ...passageiroToData(input) },
     });
     res.status(201).json(serializePassageiro(passageiro));
   })

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDownCircle, ArrowUpCircle, Plus, Trash2, TriangleAlert } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, BellRing, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -83,6 +83,34 @@ export default function ContasPage() {
           </Button>
         }
       />
+
+      {resumo && (resumo.recebiveisHoje.quantidade > 0 || resumo.recebiveisAmanha.quantidade > 0) && (
+        <div
+          role="status"
+          className="flex flex-col gap-2 rounded-lg border border-success/40 bg-success/10 px-4 py-3 text-sm sm:flex-row sm:items-center sm:gap-6"
+        >
+          <div className="flex items-center gap-2 font-medium">
+            <BellRing className="h-4 w-4 text-success" />
+            Aviso de recebimento
+          </div>
+          {resumo.recebiveisHoje.quantidade > 0 && (
+            <p>
+              Hoje você recebe <span className="font-semibold">{formatCurrency(resumo.recebiveisHoje.total)}</span>{" "}
+              <span className="text-muted-foreground">
+                ({resumo.recebiveisHoje.quantidade} {resumo.recebiveisHoje.quantidade === 1 ? "conta" : "contas"})
+              </span>
+            </p>
+          )}
+          {resumo.recebiveisAmanha.quantidade > 0 && (
+            <p>
+              Amanhã você recebe <span className="font-semibold">{formatCurrency(resumo.recebiveisAmanha.total)}</span>{" "}
+              <span className="text-muted-foreground">
+                ({resumo.recebiveisAmanha.quantidade} {resumo.recebiveisAmanha.quantidade === 1 ? "conta" : "contas"})
+              </span>
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard

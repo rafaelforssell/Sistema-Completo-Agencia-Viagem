@@ -117,7 +117,7 @@ const alertasQuerySchema = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
-  tipo: z.enum(["checkin", "aniversario", "passaporte", "termino"]).optional(),
+  tipo: z.enum(["checkin", "aniversario", "passaporte", "termino", "recebimento"]).optional(),
 });
 
 alertasRouter.get(

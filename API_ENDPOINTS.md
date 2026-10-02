@@ -56,14 +56,27 @@ Campos: `nome`, `email?`, `telefone?`, `telefoneDdi?` (código do país, ex.: `+
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/viagens` | Lista paginada. Filtros: `busca`, `status`, `clienteId`. |
-| GET | `/viagens/:id` | Detalhe, incluindo `cliente`, `passageiros[]`, `pagamentos[]`, `reembolsos[]`, `anexos[]`. |
-| POST | `/viagens` | Cria viagem vinculada a `clienteId`. |
-| PUT | `/viagens/:id` | Atualiza viagem. |
+| GET | `/viagens/:id` | Detalhe, incluindo `cliente`, `trechos[]`, `passageiros[]`, `pagamentos[]`, `reembolsos[]`, `comissao?`, `vendas[]`, `anexos[]`. |
+| GET | `/viagens/:id/resumo` | Guia completo: viagem + `cliente`, `trechos[]`, `passageiros[]`, `vendas[]` (itens com `fornecedorNome`), `pagamentos[]`, `contas[]`, `comissoes[]`, `reembolsos[]` e `totais: { totalVendido, pagoFornecedores, recebido, aReceber, comissao }`. |
+| POST | `/viagens` | Cria a viagem **e, na mesma transação**, os trechos de voo, os passageiros, a comissão e a venda (a viagem sempre entra em Vendas). |
+| PUT | `/viagens/:id` | Atualiza viagem. Se `trechos` vier, substitui todos; `comissao` faz upsert da comissão da viagem (`valor: 0` remove); mudar `status` sincroniza o status da(s) venda(s) vinculada(s). |
 | DELETE | `/viagens/:id` | Remove viagem (cascata: passageiros, pagamentos, reembolsos). |
 | POST | `/viagens/:id/voucher` | Gera o PDF do voucher no servidor. Resposta `{ url, geradoEm }`. |
 
-Campos: `clienteId`, `destino`, `dataIda`, `dataVolta`, `companhiaAerea?`,
-`status` (`orcamento` \| `confirmada` \| `em_andamento` \| `concluida` \| `cancelada`), `observacoes?`.
+Campos: `clienteId`, `destino`, `dataIda`, `dataVolta`, `companhiaAerea?`, `localizador?`,
+`status` (`orcamento` \| `confirmada` \| `em_andamento` \| `concluida` \| `cancelada`), `observacoes?`,
+`trechos?`, `comissao?` (`{ valor, fornecedor? }`).
+
+`trechos[]` (itinerário — um item por voo; conexões são trechos extras): `sentido` (`ida` \| `volta`),
+`numeroVoo?`, `companhia?`, `origemIata?`, `origemAeroporto?`, `destinoIata?`, `destinoAeroporto?`,
+`partidaPrevista?`, `chegadaPrevista?` (horário **local do aeroporto**, `AAAA-MM-DDTHH:mm`, salvo como
+UTC para ser exibido sem conversão de fuso), `terminalPartida?`, `terminalChegada?`, `aeronave?`,
+`classe?`, `bagagem?`. A ordem do array é a ordem do itinerário.
+
+Só no POST: `passageiros?` (mesmos campos de Passageiros; cada um também vira Cliente, como na rota
+de passageiros) e `venda` (obrigatória): `{ dataVenda, observacoes?, numeroPedidoExtras?, itens[] }`
+(mesmos campos de Vendas). O status da venda segue o da viagem: `orcamento` → `orcamento`,
+`cancelada` → `cancelada`, demais → `confirmada`.
 
 ### Passageiros (membros da família, aninhados em uma viagem)
 
@@ -122,26 +135,27 @@ destino mudar para `cliente`, o crédito correspondente é removido.
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/contas` | Lista paginada. Filtros: `busca`, `natureza`, `status`. |
-| GET | `/contas/resumo` | `{ totalAPagar, totalAReceber, totalAtrasado, saldoPorFonte: [{ fonte, saldo }] }`. |
+| GET | `/contas/resumo` | `{ totalAPagar, totalAReceber, totalAtrasado, saldoPorFonte: [{ fonte, saldo }], recebiveisHoje: { total, quantidade }, recebiveisAmanha: { total, quantidade } }`. "Hoje" é o dia no horário de Brasília; recebíveis = contas `a_receber` pendentes/atrasadas e contabilizáveis vencendo no dia. |
 | POST | `/contas` | Cria conta. |
 | PUT | `/contas/:id` | Atualiza conta. |
 | DELETE | `/contas/:id` | Remove conta. |
 
 Campos: `natureza` (`a_pagar` \| `a_receber`), `descricao`, `origem` (`cliente` \| `fornecedor`),
-`origemNome`, `viagemId?`, `valor`, `vencimento`, `status` (`pendente` \| `pago` \| `atrasado` \| `cancelado`), `fonte?`.
+`origemNome`, `viagemId?`, `valor`, `vencimento`, `status` (`pendente` \| `pago` \| `atrasado` \| `cancelado`), `fonte?`, `observacoes?`.
 
 ## Comissionamento
 
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/comissoes` | Lista paginada. Filtros: `busca`, `status`, `viagemId`. |
-| POST | `/comissoes` | Cria comissão. **`valorLiquido` é calculado pelo backend** a partir de `valorBruto` e `percentual`. |
-| PUT | `/comissoes/:id` | Atualiza comissão (recalcula `valorLiquido`). |
+| POST | `/comissoes` | Cria comissão. |
+| PUT | `/comissoes/:id` | Atualiza comissão. |
 | DELETE | `/comissoes/:id` | Remove comissão. |
 
-Campos de entrada: `viagemId`, `fornecedor`, `percentual`, `valorBruto`,
+Campos: `viagemId`, `fornecedor?`, `valor` (comissão em R$),
 `status` (`pendente` \| `recebida` \| `cancelada`), `dataPrevista?`, `dataRecebimento?`.
-Resposta inclui também `valorLiquido` (calculado).
+(O modelo antigo em percentual foi descontinuado; comissões antigas foram convertidas para
+`valor = valorBruto × percentual / 100`.)
 
 ## Anexos (documentos)
 
@@ -160,7 +174,7 @@ storage assinado) e `tamanhoBytes`, `mimeType`, `nomeArquivo`.
 |---|---|---|
 | GET | `/dashboard/metricas` | `{ totalClientes, viagensAtivas, viagensPorStatus: { emCotacao, emAndamento, finalizadas }, proximosCheckIns, aniversariantesSemana, passaportesVencendoEm30Dias, contasAPagar, contasAReceber }`. |
 | GET | `/atividades?limite=20` | Feed cronológico (mais recente primeiro) de eventos: viagens próximas, pagamentos pendentes, reembolsos em aberto, clientes novos, viagens concluídas. |
-| GET | `/alertas` | Filtros: `lido` (boolean), `tipo` (`checkin` \| `aniversario` \| `passaporte` \| `termino`). Nunca inclui alertas excluídos. |
+| GET | `/alertas` | Filtros: `lido` (boolean), `tipo` (`checkin` \| `aniversario` \| `passaporte` \| `termino` \| `recebimento`). `recebimento`: conta a receber vencendo hoje (urgente) ou amanhã (atenção). Nunca inclui alertas excluídos. |
 | PATCH | `/alertas/:id/lido` | Marca um alerta como lido. |
 | PATCH | `/alertas/lidos` | Marca **todos** os alertas pendentes como lidos. |
 | DELETE | `/alertas/:id` | Descarta o alerta (não volta a aparecer, mesmo que a condição que o gerou continue verdadeira). |
@@ -213,9 +227,9 @@ atrasoMinutos?, horarioPrevisto, horarioEstimado?, horarioReal? }`), e
 `posicaoAtual?` (posição/altitude/velocidade em tempo real, só quando o voo está
 no ar — no plano gratuito costuma vir vazio).
 
-Usado no formulário de nova viagem pra pré-preencher `companhiaAerea`, `destino`
-e `dataIda` a partir do número do voo — o usuário sempre revisa antes de salvar.
-O detalhe completo aparece num card de conferência abaixo da busca.
+Usado em cada trecho de voo do formulário de viagem pra pré-preencher companhia,
+aeroportos, horários e terminais a partir do número do voo — o usuário sempre
+revisa antes de salvar.
 
 ## Vendas
 

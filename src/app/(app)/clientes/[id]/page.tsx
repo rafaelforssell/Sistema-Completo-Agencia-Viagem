@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   Cake,
+  FileText,
   IdCard,
   Mail,
   MapPin,
   Pencil,
   Phone,
   Plane,
+  Plus,
   Stamp,
   Trash2,
 } from "lucide-react";
@@ -29,7 +31,10 @@ import { PageHeader } from "@/components/common/page-header";
 import { StatusBadge } from "@/components/common/status-badge";
 import { AttachmentsPanel } from "@/components/upload/attachments-panel";
 import { ClienteForm } from "@/components/clientes/cliente-form";
+import { ViagemForm } from "@/components/viagens/viagem-form";
+import { ViagemResumo } from "@/components/viagens/viagem-resumo";
 import { useAtualizarCliente, useCliente, useRemoverCliente } from "@/hooks/use-clientes";
+import { useCriarViagem } from "@/hooks/use-viagens";
 import { STATUS_VIAGEM_LABEL } from "@/lib/constants";
 import { daysUntil, formatDate } from "@/lib/format";
 import type { StatusViagem } from "@/types/entities";
@@ -47,10 +52,13 @@ export default function ClienteDetalhePage() {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [novaViagemOpen, setNovaViagemOpen] = useState(false);
+  const [resumoViagemId, setResumoViagemId] = useState<string | null>(null);
 
   const { data: cliente, isLoading } = useCliente(params.id);
   const atualizarCliente = useAtualizarCliente(params.id);
   const removerCliente = useRemoverCliente();
+  const criarViagem = useCriarViagem();
 
   if (isLoading || !cliente) {
     return (
@@ -154,35 +162,44 @@ export default function ClienteDetalhePage() {
 
         <div className="space-y-6 lg:col-span-2">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Viagens vinculadas</CardTitle>
+              <Button size="sm" onClick={() => setNovaViagemOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Nova viagem
+              </Button>
             </CardHeader>
             <CardContent>
               {!cliente.viagens || cliente.viagens.length === 0 ? (
                 <EmptyState
                   icon={Plane}
                   title="Nenhuma viagem cadastrada"
-                  description="As viagens deste cliente aparecerão aqui."
+                  description="Clique em “Nova viagem” para cadastrar voos, passageiros e a venda."
                 />
               ) : (
                 <div className="space-y-1.5">
                   {cliente.viagens.map((viagem) => (
-                    <Link
+                    <div
                       key={viagem.id}
-                      href={`/viagens/${viagem.id}`}
-                      className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5 text-sm hover:bg-muted/50"
+                      className="flex items-center gap-2 rounded-lg border border-border pr-2 text-sm hover:bg-muted/50"
                     >
-                      <div>
-                        <p className="font-medium">{viagem.destino}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(viagem.dataIda)} – {formatDate(viagem.dataVolta)}
-                        </p>
-                      </div>
-                      <StatusBadge
-                        tone={STATUS_TONE[viagem.status]}
-                        label={STATUS_VIAGEM_LABEL[viagem.status]}
-                      />
-                    </Link>
+                      <Link href={`/viagens/${viagem.id}`} className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2.5">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{viagem.destino}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(viagem.dataIda)} – {formatDate(viagem.dataVolta)}
+                          </p>
+                        </div>
+                        <StatusBadge
+                          tone={STATUS_TONE[viagem.status]}
+                          label={STATUS_VIAGEM_LABEL[viagem.status]}
+                        />
+                      </Link>
+                      <Button variant="outline" size="sm" onClick={() => setResumoViagemId(viagem.id)}>
+                        <FileText className="h-4 w-4" />
+                        Resumo
+                      </Button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -215,6 +232,40 @@ export default function ClienteDetalhePage() {
               }
             />
           </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={novaViagemOpen} onOpenChange={setNovaViagemOpen}>
+        <SheetContent className="overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>Nova viagem para {cliente.nome}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            {novaViagemOpen && (
+              <ViagemForm
+                clienteFixo={{ id: cliente.id, nome: cliente.nome }}
+                isSubmitting={criarViagem.isPending}
+                onCancel={() => setNovaViagemOpen(false)}
+                onSubmit={(values) =>
+                  criarViagem.mutate(values, {
+                    onSuccess: (viagem) => {
+                      setNovaViagemOpen(false);
+                      setResumoViagemId(viagem.id);
+                    },
+                  })
+                }
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={Boolean(resumoViagemId)} onOpenChange={(open) => !open && setResumoViagemId(null)}>
+        <SheetContent className="overflow-y-auto sm:max-w-3xl">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Resumo da viagem</SheetTitle>
+          </SheetHeader>
+          <div className="mt-2">{resumoViagemId && <ViagemResumo viagemId={resumoViagemId} />}</div>
         </SheetContent>
       </Sheet>
 

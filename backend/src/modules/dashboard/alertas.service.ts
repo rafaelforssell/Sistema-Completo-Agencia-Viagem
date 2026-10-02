@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma";
-import { diffInDays, nextAnniversary } from "../../utils/dates";
+import { addDays, diffInDays, hojeCalendario, nextAnniversary } from "../../utils/dates";
 
-export type TipoAlerta = "checkin" | "aniversario" | "passaporte" | "termino";
+export type TipoAlerta = "checkin" | "aniversario" | "passaporte" | "termino" | "recebimento";
 export type SeveridadeAlerta = "info" | "atencao" | "urgente";
 
 export interface AlertaComputado {
@@ -124,6 +124,34 @@ export async function computeAlertas(): Promise<AlertaComputado[]> {
         viagemId: passageiro.viagemId,
       });
     }
+  }
+
+  // Contas a receber vencendo hoje ou amanhã. A chave inclui a data de
+  // vencimento: se a conta for reagendada, o alerta volta a aparecer.
+  const hojeBr = hojeCalendario();
+  const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  const recebiveis = await prisma.contaFinanceira.findMany({
+    where: {
+      natureza: "a_receber",
+      status: { in: ["pendente", "atrasado"] },
+      contabilizavel: true,
+      vencimento: { gte: hojeBr, lt: addDays(hojeBr, 2) },
+    },
+  });
+
+  for (const conta of recebiveis) {
+    const ehHoje = diffInDays(conta.vencimento, hojeBr) === 0;
+    const valor = moeda.format(Number(conta.valor));
+    alertas.push({
+      id: `recebimento:${conta.id}:${conta.vencimento.toISOString().slice(0, 10)}`,
+      tipo: "recebimento",
+      severidade: ehHoje ? "urgente" : "atencao",
+      titulo: ehHoje ? `Você recebe hoje ${valor}` : `Você recebe amanhã ${valor}`,
+      descricao: `${conta.origemNome} · ${conta.descricao}`,
+      data: conta.vencimento.toISOString(),
+      clienteId: conta.clienteId ?? undefined,
+      viagemId: conta.viagemId ?? undefined,
+    });
   }
 
   alertas.sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());

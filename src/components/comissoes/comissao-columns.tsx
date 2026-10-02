@@ -16,21 +16,12 @@ export const comissaoColumns: ColumnDef<Comissao>[] = [
   {
     accessorKey: "fornecedor",
     header: "Fornecedor",
+    cell: ({ row }) => row.original.fornecedor || "—",
   },
   {
-    accessorKey: "percentual",
-    header: "%",
-    cell: ({ row }) => `${row.original.percentual}%`,
-  },
-  {
-    accessorKey: "valorBruto",
-    header: "Valor bruto",
-    cell: ({ row }) => formatCurrency(row.original.valorBruto),
-  },
-  {
-    accessorKey: "valorLiquido",
-    header: "Valor líquido",
-    cell: ({ row }) => formatCurrency(row.original.valorLiquido),
+    accessorKey: "valor",
+    header: "Comissão",
+    cell: ({ row }) => formatCurrency(row.original.valor),
   },
   {
     accessorKey: "dataPrevista",

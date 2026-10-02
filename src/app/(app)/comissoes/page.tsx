@@ -53,7 +53,7 @@ export default function ComissoesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Comissionamento"
-        description="Comissões por viagem e fornecedor, com valor líquido calculado pelo servidor."
+        description="Comissões por viagem, em valor (R$)."
         actions={
           <Button onClick={() => { setEditando(null); setFormOpen(true); }}>
             <Plus className="h-4 w-4" />

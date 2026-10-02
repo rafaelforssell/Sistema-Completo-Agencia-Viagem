@@ -66,12 +66,16 @@ model Viagem {
   dataIda        DateTime
   dataVolta      DateTime
   companhiaAerea String?
+  // Código da reserva (PNR) — preenchido à mão por enquanto; futuramente
+  // pela integração de busca da passagem.
+  localizador    String?
   status         StatusViagem @default(orcamento)
   observacoes    String?
   criadoEm       DateTime     @default(now())
   atualizadoEm   DateTime     @updatedAt
 
   cliente     Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  trechos     VooTrecho[]
   passageiros Passageiro[]
   pagamentos  Pagamento[]
   reembolsos  Reembolso[]
@@ -81,6 +85,40 @@ model Viagem {
   vendas      Venda[]
 
   @@map("viagens")
+}
+
+enum SentidoTrecho {
+  ida
+  volta
+}
+
+// Cada voo do itinerário (ida, conexões, volta) é um trecho — um número de
+// voo por trecho. As datas de ida/volta da viagem são derivadas daqui no
+// formulário, mas continuam salvas na Viagem para filtros e alertas.
+model VooTrecho {
+  id               String        @id @default(uuid())
+  viagemId         String
+  ordem            Int
+  sentido          SentidoTrecho
+  numeroVoo        String?
+  companhia        String?
+  origemIata       String?
+  origemAeroporto  String?
+  destinoIata      String?
+  destinoAeroporto String?
+  partidaPrevista  DateTime?
+  chegadaPrevista  DateTime?
+  terminalPartida  String?
+  terminalChegada  String?
+  aeronave         String?
+  classe           String?
+  bagagem          String?
+  criadoEm         DateTime      @default(now())
+  atualizadoEm     DateTime      @updatedAt
+
+  viagem Viagem @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+
+  @@map("voo_trechos")
 }
 
 model Passageiro {
@@ -228,6 +266,7 @@ model ContaFinanceira {
   vencimento DateTime
   status     StatusConta   @default(pendente)
   fonte      String?
+  observacoes String?
   // false para entradas apenas informativas (ex.: pagamento já quitado
   // direto pelo cliente) — aparecem na listagem, mas não entram nos
   // somatórios de "a pagar"/"a receber" do resumo e do painel.
@@ -251,10 +290,13 @@ enum StatusComissao {
 model Comissao {
   id              String         @id @default(uuid())
   viagemId        String
-  fornecedor      String
-  percentual      Decimal        @db.Decimal(5, 2)
-  valorBruto      Decimal        @db.Decimal(12, 2)
-  valorLiquido    Decimal        @db.Decimal(12, 2)
+  fornecedor      String?
+  // Valor da comissão em R$. percentual/valorBruto/valorLiquido são do
+  // modelo antigo (em %) e ficam só como histórico.
+  valor           Decimal        @db.Decimal(12, 2)
+  percentual      Decimal?       @db.Decimal(5, 2)
+  valorBruto      Decimal?       @db.Decimal(12, 2)
+  valorLiquido    Decimal?       @db.Decimal(12, 2)
   status          StatusComissao @default(pendente)
   dataPrevista    DateTime?
   dataRecebimento DateTime?

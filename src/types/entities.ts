@@ -100,12 +100,56 @@ export interface Viagem extends Timestamps {
   dataIda: string;
   dataVolta: string;
   companhiaAerea?: string;
+  localizador?: string;
   status: StatusViagem;
   observacoes?: string;
+  trechos?: VooTrecho[];
   passageiros?: Passageiro[];
   pagamentos?: Pagamento[];
   reembolsos?: Reembolso[];
+  comissao?: Comissao;
+  vendas?: Venda[];
   anexos?: DocumentoAnexo[];
+}
+
+export type SentidoTrecho = "ida" | "volta";
+
+export interface VooTrecho {
+  id?: ID;
+  ordem?: number;
+  sentido: SentidoTrecho;
+  numeroVoo?: string;
+  companhia?: string;
+  origemIata?: string;
+  origemAeroporto?: string;
+  destinoIata?: string;
+  destinoAeroporto?: string;
+  // Horário local do aeroporto, serializado como ISO em UTC (ver backend).
+  partidaPrevista?: string;
+  chegadaPrevista?: string;
+  terminalPartida?: string;
+  terminalChegada?: string;
+  aeronave?: string;
+  classe?: string;
+  bagagem?: string;
+}
+
+export interface ViagemResumoCompleto extends Omit<Viagem, "comissao" | "vendas"> {
+  cliente: Cliente;
+  trechos: VooTrecho[];
+  passageiros: Passageiro[];
+  pagamentos: Pagamento[];
+  reembolsos: Reembolso[];
+  comissoes: Comissao[];
+  contas: ContaFinanceira[];
+  vendas: (Omit<Venda, "itens"> & { itens: (VendaItem & { fornecedorNome?: string })[] })[];
+  totais: {
+    totalVendido: number;
+    pagoFornecedores: number;
+    recebido: number;
+    aReceber: number;
+    comissao: number;
+  };
 }
 
 export interface ViagemResumo {
@@ -126,7 +170,14 @@ export type ViagemInput = Omit<
   | "pagamentos"
   | "reembolsos"
   | "anexos"
->;
+  | "comissao"
+  | "vendas"
+> & {
+  comissao?: { valor: number; fornecedor?: string } | null;
+  // Só na criação — na edição passageiros e venda têm abas próprias.
+  passageiros?: PassageiroInput[];
+  venda?: Pick<VendaInput, "dataVenda" | "observacoes" | "numeroPedidoExtras" | "itens">;
+};
 
 // ---------- Pagamentos ----------
 
@@ -204,6 +255,7 @@ export interface ContaFinanceira extends Timestamps {
   // false para entradas apenas informativas (pagamento já quitado direto
   // pelo cliente) — não entram nos somatórios de a pagar/a receber.
   contabilizavel?: boolean;
+  observacoes?: string;
 }
 
 export interface ResumoFinanceiro {
@@ -211,6 +263,8 @@ export interface ResumoFinanceiro {
   totalAReceber: number;
   totalAtrasado: number;
   saldoPorFonte: { fonte: string; saldo: number }[];
+  recebiveisHoje: { total: number; quantidade: number };
+  recebiveisAmanha: { total: number; quantidade: number };
 }
 
 // ---------- Comissionamento ----------
@@ -220,19 +274,14 @@ export type StatusComissao = "pendente" | "recebida" | "cancelada";
 export interface Comissao extends Timestamps {
   id: ID;
   viagemId: ID;
-  fornecedor: string;
-  percentual: number;
-  valorBruto: number;
-  valorLiquido: number;
+  fornecedor?: string;
+  valor: number;
   status: StatusComissao;
   dataPrevista?: string;
   dataRecebimento?: string;
 }
 
-export type ComissaoInput = Omit<
-  Comissao,
-  "id" | "criadoEm" | "atualizadoEm" | "valorLiquido"
->;
+export type ComissaoInput = Omit<Comissao, "id" | "criadoEm" | "atualizadoEm">;
 
 // ---------- Fornecedores ----------
 
@@ -432,7 +481,7 @@ export interface AtividadeFeed {
   referenciaTipo?: "cliente" | "viagem" | "pagamento" | "reembolso";
 }
 
-export type TipoAlerta = "checkin" | "aniversario" | "passaporte" | "termino";
+export type TipoAlerta = "checkin" | "aniversario" | "passaporte" | "termino" | "recebimento";
 export type SeveridadeAlerta = "info" | "atencao" | "urgente";
 
 export interface Alerta {

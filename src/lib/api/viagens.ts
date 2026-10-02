@@ -6,6 +6,7 @@ import type {
   PassageiroInput,
   Viagem,
   ViagemInput,
+  ViagemResumoCompleto,
   VoucherResponse,
 } from "@/types/entities";
 
@@ -18,6 +19,7 @@ export const viagensApi = {
   listar: (params?: ViagensFiltro) =>
     http.get<PaginatedResponse<Viagem>>("/viagens", params),
   obter: (id: string) => http.get<Viagem>(`/viagens/${id}`),
+  resumo: (id: string) => http.get<ViagemResumoCompleto>(`/viagens/${id}/resumo`),
   criar: (input: ViagemInput) => http.post<Viagem>("/viagens", input),
   atualizar: (id: string, input: Partial<ViagemInput>) =>
     http.put<Viagem>(`/viagens/${id}`, input),

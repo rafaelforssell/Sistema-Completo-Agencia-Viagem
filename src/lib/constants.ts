@@ -228,6 +228,7 @@ export const TIPO_ALERTA_LABEL: Record<TipoAlerta, string> = {
   aniversario: "Aniversário",
   passaporte: "Passaporte vencendo",
   termino: "Término de viagem",
+  recebimento: "Recebimento",
 };
 
 export const SEVERIDADE_ALERTA_LABEL: Record<SeveridadeAlerta, string> = {

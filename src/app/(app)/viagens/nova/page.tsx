@@ -5,13 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/common/page-header";
 import { ViagemForm } from "@/components/viagens/viagem-form";
 import { useCriarViagem } from "@/hooks/use-viagens";
-import type { ViagemFormValues } from "@/lib/schemas/viagem";
+import type { ViagemInput } from "@/types/entities";
 
 export default function NovaViagemPage() {
   const router = useRouter();
   const criarViagem = useCriarViagem();
 
-  function handleSubmit(values: ViagemFormValues) {
+  function handleSubmit(values: ViagemInput) {
     criarViagem.mutate(values, {
       onSuccess: (viagem) => router.push(`/viagens/${viagem.id}`),
     });
@@ -19,7 +19,7 @@ export default function NovaViagemPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader title="Nova viagem" description="Vincule a viagem a um cliente principal." />
+      <PageHeader title="Nova viagem" description="Voos, passageiros, venda e comissão — tudo em um só cadastro." />
       <Card>
         <CardContent className="pt-6">
           <ViagemForm
