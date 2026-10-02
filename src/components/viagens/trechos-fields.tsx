@@ -2,15 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
-import {
-  ChevronDown,
-  Loader2,
-  PlaneLanding,
-  PlaneTakeoff,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { ChevronDown, Loader2, PlaneLanding, PlaneTakeoff, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -41,7 +33,14 @@ type CampoTrecho = `trechos.${number}.${Exclude<keyof TrechoFormValues, "sentido
 // Itinerário da viagem, separado em Ida e Volta. Cada voo é um trecho; uma
 // conexão é o voo seguinte no mesmo sentido, saindo de onde o anterior
 // chegou. A busca por nº do voo preenche o trecho; tudo continua editável.
-export function TrechosFields({ form }: { form: UseFormReturn<ViagemFormValues> }) {
+export function TrechosFields({
+  form,
+  estreito = false,
+}: {
+  form: UseFormReturn<ViagemFormValues>;
+  // Coluna estreita (página em 3 colunas): partida e chegada um embaixo do outro.
+  estreito?: boolean;
+}) {
   const trechos = useFieldArray({ control: form.control, name: "trechos" });
   const valores = form.watch("trechos") ?? [];
   const buscarVoo = useBuscarVoo();
@@ -124,38 +123,72 @@ export function TrechosFields({ form }: { form: UseFormReturn<ViagemFormValues> 
             <Fragment key={id}>
               {anterior && <ConexaoInfo anterior={anterior} proximo={valores[index] ?? {}} />}
               <div className="space-y-2 rounded-lg border border-border p-3">
-                <div className="grid items-end gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_auto]">
-                  <div className="flex items-end gap-2">
-                    <Campo form={form} name={`trechos.${index}.numeroVoo`} label="Nº do voo" placeholder="LA3400"
-                      onEnter={() => buscar(index)} />
-                    <Button type="button" variant="outline" onClick={() => buscar(index)} disabled={buscarVoo.isPending}
-                      aria-label="Buscar voo">
-                      {buscando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    </Button>
-                  </div>
+                <div className="flex items-end gap-2">
+                  <Campo
+                    form={form}
+                    name={`trechos.${index}.numeroVoo`}
+                    label="Nº do voo"
+                    placeholder="LA3400"
+                    onEnter={() => buscar(index)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => buscar(index)}
+                    disabled={buscarVoo.isPending}
+                    aria-label="Buscar voo"
+                  >
+                    {buscando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => alternarDetalhes(id)}
+                    aria-expanded={aberto}
+                  >
+                    {estreito ? "Detalhes" : "Mais detalhes"}
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-destructive hover:text-destructive"
+                    onClick={() => trechos.remove(index)}
+                    aria-label="Remover voo"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className={cn("grid gap-2", !estreito && "sm:grid-cols-2")}>
                   <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-end gap-2">
                     <Campo form={form} name={`trechos.${index}.origemIata`} label="Partida" placeholder="GRU" />
-                    <Campo form={form} name={`trechos.${index}.partidaPrevista`} type="datetime-local" ariaLabel="Horário de partida" />
+                    <Campo
+                      form={form}
+                      name={`trechos.${index}.partidaPrevista`}
+                      type="datetime-local"
+                      ariaLabel="Horário de partida"
+                    />
                   </div>
                   <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-end gap-2">
                     <Campo form={form} name={`trechos.${index}.destinoIata`} label="Chegada" placeholder="LIS" />
-                    <Campo form={form} name={`trechos.${index}.chegadaPrevista`} type="datetime-local" ariaLabel="Horário de chegada" />
-                  </div>
-                  <div className="flex items-end gap-1">
-                    <Button type="button" variant="ghost" size="sm" onClick={() => alternarDetalhes(id)} aria-expanded={aberto}>
-                      Mais detalhes
-                      <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon"
-                      className="text-destructive hover:text-destructive" onClick={() => trechos.remove(index)}
-                      aria-label="Remover voo">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Campo
+                      form={form}
+                      name={`trechos.${index}.chegadaPrevista`}
+                      type="datetime-local"
+                      ariaLabel="Horário de chegada"
+                    />
                   </div>
                 </div>
 
                 {aberto && (
-                  <div className="grid gap-2 border-t border-border pt-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <div
+                    className={cn(
+                      "grid gap-2 border-t border-border pt-2",
+                      estreito ? "grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-4",
+                    )}
+                  >
                     <Campo form={form} name={`trechos.${index}.companhia`} label="Companhia" />
                     <Campo form={form} name={`trechos.${index}.origemAeroporto`} label="Aeroporto de partida" />
                     <Campo form={form} name={`trechos.${index}.destinoAeroporto`} label="Aeroporto de chegada" />

@@ -23,7 +23,7 @@ export default function NovaViagemPage() {
       <Card>
         <CardContent className="pt-6">
           <ViagemForm
-            duasColunas
+            paginaInteira
             onSubmit={handleSubmit}
             isSubmitting={criarViagem.isPending}
             onCancel={() => router.back()}
