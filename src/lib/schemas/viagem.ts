@@ -1,16 +1,13 @@
 import { z } from "zod";
+import { clienteSchema } from "@/lib/schemas/cliente";
 import { vendaItemSchema } from "@/lib/schemas/venda";
 
 const textoOpcional = z.string().optional().or(z.literal(""));
 
-export const passageiroSchema = z.object({
-  nome: z.string().min(2, "Informe o nome completo."),
+// Mesmos campos (e validações de CPF/CEP) do cadastro de cliente, mais os
+// dados do passageiro na viagem.
+export const passageiroSchema = clienteSchema.extend({
   parentesco: textoOpcional,
-  email: z.string().email("E-mail inválido.").optional().or(z.literal("")),
-  telefone: textoOpcional,
-  dataNascimento: textoOpcional,
-  numeroPassaporte: textoOpcional,
-  validadePassaporte: textoOpcional,
   numeroBilhete: textoOpcional,
 });
 

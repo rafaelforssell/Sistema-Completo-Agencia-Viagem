@@ -1,132 +1,107 @@
 "use client";
 
 import type { UseFormReturn } from "react-hook-form";
+import { ClienteCampos } from "@/components/clientes/cliente-campos";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { TelefoneInput } from "@/components/ui/telefone-input";
+import type { ClienteFormValues } from "@/lib/schemas/cliente";
 import type { PassageiroFormValues } from "@/lib/schemas/viagem";
+import type { Cliente, Passageiro } from "@/types/entities";
 
-// Campos do passageiro — os mesmos no cadastro da aba Passageiros e nos
-// passageiros adicionados direto na Nova Viagem. `prefixo` é o caminho até o
-// passageiro no formulário ("" na aba; "passageiros.0." na viagem), e o
-// `form` vem convertido para o formato de um passageiro.
+// Valores vazios de um passageiro novo (todos os campos do formulário).
+export const PASSAGEIRO_VAZIO: PassageiroFormValues = {
+  nome: "",
+  parentesco: "",
+  numeroBilhete: "",
+  email: "",
+  telefone: "",
+  telefoneDdi: "+55",
+  dataNascimento: "",
+  numeroPassaporte: "",
+  validadePassaporte: "",
+  rg: "",
+  cpf: "",
+  cep: "",
+  logradouro: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
+  observacoes: "",
+};
+
+// Preenche o formulário a partir de um passageiro existente ou de um
+// cliente (ex.: "incluir o cliente como passageiro").
+export function passageiroParaFormulario(origem?: Partial<Passageiro> | Cliente): PassageiroFormValues {
+  if (!origem) return { ...PASSAGEIRO_VAZIO };
+  const valores = { ...PASSAGEIRO_VAZIO };
+  for (const campo of Object.keys(PASSAGEIRO_VAZIO) as (keyof PassageiroFormValues)[]) {
+    const valor = (origem as Record<string, unknown>)[campo];
+    if (typeof valor === "string" && valor) valores[campo] = valor;
+  }
+  valores.dataNascimento = valores.dataNascimento?.slice(0, 10);
+  valores.validadePassaporte = valores.validadePassaporte?.slice(0, 10);
+  return valores;
+}
+
+// Campos do passageiro: o mesmo cadastro do Novo Cliente (o passageiro
+// também vira cliente) mais parentesco e nº do bilhete. Usado na aba
+// Passageiros e nos passageiros adicionados direto na Nova Viagem.
+// `prefixo` é o caminho até o passageiro no formulário ("" na aba;
+// "passageiros.0." na viagem).
 export function PassageiroCampos({
   form,
   prefixo = "",
   autoFocus,
+  largo,
+  enderecoRecolhido,
 }: {
   form: UseFormReturn<PassageiroFormValues>;
   prefixo?: string;
   autoFocus?: boolean;
+  largo?: boolean;
+  enderecoRecolhido?: boolean;
 }) {
-  const nome = (campo: keyof PassageiroFormValues) => `${prefixo}${campo}` as keyof PassageiroFormValues;
+  const n = (campo: "parentesco" | "numeroBilhete") => `${prefixo}${campo}` as keyof PassageiroFormValues;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <FormField
-        control={form.control}
-        name={nome("nome")}
-        render={({ field }) => (
-          <FormItem className="sm:col-span-2">
-            <FormLabel>Nome completo</FormLabel>
-            <FormControl>
-              <Input placeholder="João da Silva" autoFocus={autoFocus} {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("parentesco")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Parentesco</FormLabel>
-            <FormControl>
-              <Input placeholder="Cônjuge, filho(a)..." {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("email")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>E-mail</FormLabel>
-            <FormControl>
-              <Input type="email" placeholder="maria@email.com" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("telefone")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Telefone</FormLabel>
-            <FormControl>
-              <TelefoneInput {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("dataNascimento")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Data de nascimento</FormLabel>
-            <FormControl>
-              <Input type="date" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("numeroPassaporte")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Número do passaporte</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("validadePassaporte")}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Validade do passaporte</FormLabel>
-            <FormControl>
-              <Input type="date" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name={nome("numeroBilhete")}
-        render={({ field }) => (
-          <FormItem className="sm:col-span-2">
-            <FormLabel>Número do bilhete aéreo</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
+    <ClienteCampos
+      form={form as unknown as UseFormReturn<ClienteFormValues>}
+      prefixo={prefixo}
+      autoFocus={autoFocus}
+      largo={largo}
+      enderecoRecolhido={enderecoRecolhido}
+      extras={
+        <>
+          <FormField
+            control={form.control}
+            name={n("parentesco")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Parentesco</FormLabel>
+                <FormControl>
+                  <Input placeholder="Cônjuge, filho(a)..." {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name={n("numeroBilhete")}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nº do bilhete aéreo</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
+      }
+    />
   );
 }

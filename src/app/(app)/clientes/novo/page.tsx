@@ -18,11 +18,12 @@ export default function NovoClientePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader title="Novo cliente" description="Preencha os dados principais do cliente." />
       <Card>
         <CardContent className="pt-6">
           <ClienteForm
+            largo
             onSubmit={handleSubmit}
             isSubmitting={criarCliente.isPending}
             onCancel={() => router.back()}

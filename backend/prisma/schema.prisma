@@ -128,10 +128,22 @@ model Passageiro {
   parentesco         String?
   email              String?
   telefone           String?
+  telefoneDdi        String?
   dataNascimento     DateTime?
   numeroPassaporte   String?
   validadePassaporte DateTime?
   numeroBilhete      String?
+  // Mesmos dados do cadastro de cliente (o passageiro também vira Cliente).
+  rg                 String?
+  cpf                String?
+  cep                String?
+  logradouro         String?
+  numero             String?
+  complemento        String?
+  bairro             String?
+  cidade             String?
+  estado             String?
+  observacoes        String?
   criadoEm           DateTime  @default(now())
   atualizadoEm       DateTime  @updatedAt
 

@@ -74,16 +74,14 @@ export type StatusViagem =
   | "concluida"
   | "cancelada";
 
-export interface Passageiro extends Timestamps {
+// O passageiro tem os mesmos dados do cadastro de Cliente (e vira um Cliente
+// ao ser criado), mais o que é específico da viagem: parentesco e bilhete.
+export interface Passageiro
+  extends Timestamps,
+    Omit<Cliente, "id" | "criadoEm" | "atualizadoEm" | "anexos" | "viagens"> {
   id: ID;
   viagemId: ID;
-  nome: string;
   parentesco?: string;
-  email?: string;
-  telefone?: string;
-  dataNascimento?: string;
-  numeroPassaporte?: string;
-  validadePassaporte?: string;
   numeroBilhete?: string;
 }
 

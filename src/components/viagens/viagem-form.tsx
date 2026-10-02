@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PassageiroCampos } from "@/components/viagens/passageiro-campos";
+import { PASSAGEIRO_VAZIO, PassageiroCampos, passageiroParaFormulario } from "@/components/viagens/passageiro-campos";
 import { TrechosFields } from "@/components/viagens/trechos-fields";
 import {
   NumerosPedidoExtrasFields,
@@ -57,16 +57,7 @@ function hojeISO() {
 }
 
 function passageiroDoCliente(cliente: Cliente): PassageiroInput {
-  return {
-    nome: cliente.nome,
-    parentesco: "Titular",
-    email: cliente.email ?? "",
-    telefone: cliente.telefone ? `${cliente.telefoneDdi ?? ""} ${cliente.telefone}`.trim() : "",
-    dataNascimento: cliente.dataNascimento?.slice(0, 10) ?? "",
-    numeroPassaporte: cliente.numeroPassaporte ?? "",
-    validadePassaporte: cliente.validadePassaporte?.slice(0, 10) ?? "",
-    numeroBilhete: "",
-  };
+  return { ...passageiroParaFormulario(cliente), parentesco: "Titular" };
 }
 
 // Data de ida = partida do 1º trecho de ida; data de volta = partida do
@@ -186,30 +177,29 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <Secao titulo="Dados da viagem">
-          <FormField
-            control={form.control}
-            name="clienteId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cliente principal</FormLabel>
-                <FormControl>
-                  {clienteFixo ? (
-                    <Input value={clienteFixo.nome} disabled />
-                  ) : (
-                    <ClienteCombobox value={field.value} onChange={(id) => field.onChange(id)} />
-                  )}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
+            <FormField
+              control={form.control}
+              name="clienteId"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-2 lg:col-span-3">
+                  <FormLabel>Cliente principal</FormLabel>
+                  <FormControl>
+                    {clienteFixo ? (
+                      <Input value={clienteFixo.nome} disabled />
+                    ) : (
+                      <ClienteCombobox value={field.value} onChange={(id) => field.onChange(id)} />
+                    )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="destino"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2 lg:col-span-3">
                   <FormLabel>Destino</FormLabel>
                   <FormControl>
                     <Input placeholder="Lisboa, Portugal" {...field} />
@@ -222,7 +212,7 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
               control={form.control}
               name="status"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="lg:col-span-1">
                   <FormLabel>Status</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
@@ -242,65 +232,65 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="localizador"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-1">
+                  <FormLabel>Localizador da reserva</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex.: ABC123" className="uppercase" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="companhiaAerea"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-2">
+                  <FormLabel>Companhia aérea</FormLabel>
+                  <FormControl>
+                    <Input placeholder="TAP, LATAM..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dataIda"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-1">
+                  <FormLabel>Data de ida</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dataVolta"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-1">
+                  <FormLabel>Data de volta</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Datas e companhia são preenchidas automaticamente a partir dos voos abaixo — dá para ajustar à mão.
+          </p>
         </Secao>
 
         <TrechosFields form={form} />
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="dataIda"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data de ida</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="dataVolta"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data de volta</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="companhiaAerea"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Companhia aérea</FormLabel>
-                <FormControl>
-                  <Input placeholder="TAP, LATAM..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="localizador"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Localizador da reserva</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex.: ABC123" className="uppercase" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
 
         {criando && (
           <PassageirosFields form={form} nomeCliente={clienteSelecionado?.nome ?? clienteFixo?.nome} />
@@ -427,16 +417,7 @@ function PassageirosFields({ form, nomeCliente }: { form: UseFormReturn<ViagemFo
           variant="outline"
           size="sm"
           onClick={() =>
-            passageiros.append({
-              nome: "",
-              parentesco: "",
-              email: "",
-              telefone: "",
-              dataNascimento: "",
-              numeroPassaporte: "",
-              validadePassaporte: "",
-              numeroBilhete: "",
-            })
+            passageiros.append({ ...PASSAGEIRO_VAZIO })
           }
         >
           <Plus className="h-4 w-4" />
@@ -477,6 +458,8 @@ function PassageirosFields({ form, nomeCliente }: { form: UseFormReturn<ViagemFo
           <PassageiroCampos
             form={form as unknown as UseFormReturn<PassageiroFormValues>}
             prefixo={`passageiros.${index}.`}
+            largo
+            enderecoRecolhido
           />
         </div>
       ))}

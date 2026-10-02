@@ -82,7 +82,7 @@ export function PassageirosTab({ viagemId, passageiros }: { viagemId: string; pa
       )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editando ? "Editar passageiro" : "Adicionar passageiro"}</DialogTitle>
           </DialogHeader>

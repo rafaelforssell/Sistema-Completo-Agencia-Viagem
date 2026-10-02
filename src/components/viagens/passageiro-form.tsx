@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { PassageiroCampos } from "@/components/viagens/passageiro-campos";
+import { PassageiroCampos, passageiroParaFormulario } from "@/components/viagens/passageiro-campos";
 import { passageiroSchema, type PassageiroFormValues } from "@/lib/schemas/viagem";
 import type { Passageiro } from "@/types/entities";
 
@@ -19,16 +19,7 @@ interface PassageiroFormProps {
 export function PassageiroForm({ passageiro, onSubmit, isSubmitting, onCancel }: PassageiroFormProps) {
   const form = useForm<PassageiroFormValues>({
     resolver: zodResolver(passageiroSchema),
-    defaultValues: {
-      nome: passageiro?.nome ?? "",
-      parentesco: passageiro?.parentesco ?? "",
-      email: passageiro?.email ?? "",
-      telefone: passageiro?.telefone ?? "",
-      dataNascimento: passageiro?.dataNascimento?.slice(0, 10) ?? "",
-      numeroPassaporte: passageiro?.numeroPassaporte ?? "",
-      validadePassaporte: passageiro?.validadePassaporte?.slice(0, 10) ?? "",
-      numeroBilhete: passageiro?.numeroBilhete ?? "",
-    },
+    defaultValues: passageiroParaFormulario(passageiro),
   });
 
   return (

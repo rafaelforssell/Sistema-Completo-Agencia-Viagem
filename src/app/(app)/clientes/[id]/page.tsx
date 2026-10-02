@@ -236,7 +236,7 @@ export default function ClienteDetalhePage() {
       </Sheet>
 
       <Sheet open={novaViagemOpen} onOpenChange={setNovaViagemOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-2xl">
+        <SheetContent className="overflow-y-auto sm:max-w-5xl">
           <SheetHeader>
             <SheetTitle>Nova viagem para {cliente.nome}</SheetTitle>
           </SheetHeader>

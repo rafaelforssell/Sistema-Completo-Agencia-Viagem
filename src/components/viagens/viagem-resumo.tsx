@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConexaoInfo } from "@/components/viagens/conexao-info";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge, type StatusTone } from "@/components/common/status-badge";
 import { useViagemResumo } from "@/hooks/use-viagens";
@@ -324,29 +325,37 @@ function GrupoTrechos({
       <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         <Icone className="h-4 w-4" />
         {titulo}
-        {trechos.length > 1 && <span className="normal-case">· {trechos.length - 1} conexão(ões)</span>}
+        <span className="normal-case">
+          ·{" "}
+          {trechos.length === 1
+            ? "sem conexão"
+            : `${trechos.length - 1} ${trechos.length === 2 ? "conexão" : "conexões"}`}
+        </span>
       </p>
       <ol className="space-y-2">
         {trechos.map((t, i) => (
-          <li key={t.id ?? i} className="rounded-lg border border-border p-3 break-inside-avoid">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium">
-                {[t.numeroVoo, t.companhia].filter(Boolean).join(" · ") || "Voo"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {[t.classe, t.bagagem && `Bagagem: ${t.bagagem}`, t.aeronave].filter(Boolean).join(" · ")}
-              </span>
-            </div>
-            <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <Ponto iata={t.origemIata} aeroporto={t.origemAeroporto} horario={t.partidaPrevista} terminal={t.terminalPartida} />
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              <Ponto
-                iata={t.destinoIata}
-                aeroporto={t.destinoAeroporto}
-                horario={t.chegadaPrevista}
-                terminal={t.terminalChegada}
-                direita
-              />
+          <li key={t.id ?? i} className="space-y-2 break-inside-avoid">
+            {i > 0 && <ConexaoInfo anterior={trechos[i - 1]} proximo={t} />}
+            <div className="rounded-lg border border-border p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-medium">
+                  {[t.numeroVoo, t.companhia].filter(Boolean).join(" · ") || "Voo"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {[t.classe, t.bagagem && `Bagagem: ${t.bagagem}`, t.aeronave].filter(Boolean).join(" · ")}
+                </span>
+              </div>
+              <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                <Ponto iata={t.origemIata} aeroporto={t.origemAeroporto} horario={t.partidaPrevista} terminal={t.terminalPartida} />
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <Ponto
+                  iata={t.destinoIata}
+                  aeroporto={t.destinoAeroporto}
+                  horario={t.chegadaPrevista}
+                  terminal={t.terminalChegada}
+                  direita
+                />
+              </div>
             </div>
           </li>
         ))}

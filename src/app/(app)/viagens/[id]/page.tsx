@@ -158,7 +158,7 @@ export default function ViagemDetalhePage() {
       </Tabs>
 
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-2xl">
+        <SheetContent className="overflow-y-auto sm:max-w-5xl">
           <SheetHeader>
             <SheetTitle>Editar viagem</SheetTitle>
           </SheetHeader>

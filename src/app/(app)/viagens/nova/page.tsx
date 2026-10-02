@@ -18,7 +18,7 @@ export default function NovaViagemPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader title="Nova viagem" description="Voos, passageiros, venda e comissão — tudo em um só cadastro." />
       <Card>
         <CardContent className="pt-6">

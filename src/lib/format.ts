@@ -65,3 +65,23 @@ export function formatHorarioVoo(value: string | undefined | null): string {
     minute: "2-digit",
   }).format(date);
 }
+
+// Espera entre a chegada de um voo e a partida do seguinte (conexão), em
+// minutos. Os dois horários estão no mesmo "relógio" (hora local do
+// aeroporto de conexão), então a diferença direta é a espera real.
+// Aceita ISO ou o valor de um input datetime-local ("AAAA-MM-DDTHH:mm").
+export function minutosDeConexao(chegada?: string | null, partida?: string | null): number | null {
+  if (!chegada || !partida) return null;
+  const inicio = Date.parse(`${chegada.slice(0, 16)}:00Z`);
+  const fim = Date.parse(`${partida.slice(0, 16)}:00Z`);
+  if (Number.isNaN(inicio) || Number.isNaN(fim)) return null;
+  return Math.round((fim - inicio) / 60_000);
+}
+
+export function formatDuracao(minutos: number): string {
+  const total = Math.abs(minutos);
+  const horas = Math.floor(total / 60);
+  const resto = total % 60;
+  if (horas === 0) return `${resto}min`;
+  return resto === 0 ? `${horas}h` : `${horas}h${String(resto).padStart(2, "0")}`;
+}
