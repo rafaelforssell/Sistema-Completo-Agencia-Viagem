@@ -50,11 +50,22 @@ comissoesRouter.get(
         skip: pagination.skip,
         take: pagination.take,
         orderBy: { [pagination.ordenarPor ?? "criadoEm"]: pagination.ordem },
+        include: { viagem: { include: { cliente: true } } },
       }),
       prisma.comissao.count({ where }),
     ]);
 
-    res.json(paginatedResponse(dados.map(serializeComissao), total, pagination));
+    // Inclui a origem (viagem e cliente) pra mostrar na lista de onde veio.
+    res.json(
+      paginatedResponse(
+        dados.map((c) => ({
+          ...serializeComissao(c),
+          viagem: { id: c.viagem.id, destino: c.viagem.destino, clienteNome: c.viagem.cliente.nome },
+        })),
+        total,
+        pagination
+      )
+    );
   })
 );
 

@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { PassageiroCampos } from "@/components/viagens/passageiro-campos";
 import { TrechosFields } from "@/components/viagens/trechos-fields";
 import {
   NumerosPedidoExtrasFields,
@@ -36,6 +37,7 @@ import { STATUS_VIAGEM_OPTIONS } from "@/lib/constants";
 import {
   viagemCriacaoSchema,
   viagemEdicaoSchema,
+  type PassageiroFormValues,
   type TrechoFormValues,
   type ViagemFormValues,
 } from "@/lib/schemas/viagem";
@@ -472,48 +474,12 @@ function PassageirosFields({ form, nomeCliente }: { form: UseFormReturn<ViagemFo
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <CampoPassageiro form={form} index={index} campo="nome" label="Nome completo" />
-            <CampoPassageiro form={form} index={index} campo="parentesco" label="Parentesco" />
-            <CampoPassageiro form={form} index={index} campo="dataNascimento" label="Nascimento" type="date" />
-            <CampoPassageiro form={form} index={index} campo="numeroBilhete" label="Nº do bilhete" />
-            <CampoPassageiro form={form} index={index} campo="numeroPassaporte" label="Passaporte" />
-            <CampoPassageiro form={form} index={index} campo="validadePassaporte" label="Validade do passaporte" type="date" />
-            <CampoPassageiro form={form} index={index} campo="email" label="E-mail" type="email" />
-            <CampoPassageiro form={form} index={index} campo="telefone" label="Telefone" />
-          </div>
+          <PassageiroCampos
+            form={form as unknown as UseFormReturn<PassageiroFormValues>}
+            prefixo={`passageiros.${index}.`}
+          />
         </div>
       ))}
     </div>
-  );
-}
-
-function CampoPassageiro({
-  form,
-  index,
-  campo,
-  label,
-  type,
-}: {
-  form: UseFormReturn<ViagemFormValues>;
-  index: number;
-  campo: keyof ViagemFormValues["passageiros"][number];
-  label: string;
-  type?: string;
-}) {
-  return (
-    <FormField
-      control={form.control}
-      name={`passageiros.${index}.${campo}`}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="text-xs">{label}</FormLabel>
-          <FormControl>
-            <Input type={type} {...field} value={field.value ?? ""} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
   );
 }

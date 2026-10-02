@@ -14,6 +14,19 @@ const STATUS_TONE: Record<StatusComissao, StatusTone> = {
 
 export const comissaoColumns: ColumnDef<Comissao>[] = [
   {
+    id: "viagem",
+    header: "Viagem",
+    cell: ({ row }) =>
+      row.original.viagem ? (
+        <div className="max-w-xs">
+          <p className="truncate text-sm font-medium">{row.original.viagem.destino}</p>
+          <p className="truncate text-xs text-muted-foreground">{row.original.viagem.clienteNome}</p>
+        </div>
+      ) : (
+        "—"
+      ),
+  },
+  {
     accessorKey: "fornecedor",
     header: "Fornecedor",
     cell: ({ row }) => row.original.fornecedor || "—",

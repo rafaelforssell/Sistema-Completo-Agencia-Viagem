@@ -15,6 +15,8 @@ import {
 import { DdiSelect } from "@/components/common/ddi-select";
 import { CepInput } from "@/components/ui/cep-input";
 import { CpfInput } from "@/components/ui/cpf-input";
+import { RgInput } from "@/components/ui/rg-input";
+import { formatTelefone, TelefoneInput } from "@/components/ui/telefone-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCepLookup } from "@/hooks/use-cep-lookup";
@@ -52,6 +54,7 @@ export function ClienteForm({ cliente, onSubmit, isSubmitting, onCancel }: Clien
       observacoes: cliente?.observacoes ?? "",
     },
   });
+  const telefoneDdi = form.watch("telefoneDdi");
 
   async function handleCepBlur(cep: string) {
     const endereco = await buscarCep(cep);
@@ -104,11 +107,18 @@ export function ClienteForm({ cliente, onSubmit, isSubmitting, onCancel }: Clien
                     control={form.control}
                     name="telefoneDdi"
                     render={({ field: ddiField }) => (
-                      <DdiSelect value={ddiField.value} onChange={ddiField.onChange} />
+                      <DdiSelect
+                        value={ddiField.value}
+                        onChange={(ddi) => {
+                          ddiField.onChange(ddi);
+                          // Reaplica a máscara no formato do país escolhido.
+                          field.onChange(formatTelefone(field.value ?? "", ddi));
+                        }}
+                      />
                     )}
                   />
                   <FormControl>
-                    <Input placeholder="11 99999-9999" {...field} />
+                    <TelefoneInput ddi={telefoneDdi || "+55"} {...field} />
                   </FormControl>
                 </div>
                 <FormMessage />
@@ -168,7 +178,7 @@ export function ClienteForm({ cliente, onSubmit, isSubmitting, onCancel }: Clien
               <FormItem>
                 <FormLabel>RG</FormLabel>
                 <FormControl>
-                  <Input placeholder="00.000.000-0" {...field} />
+                  <RgInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

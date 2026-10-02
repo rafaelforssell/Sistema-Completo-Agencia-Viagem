@@ -147,7 +147,7 @@ Campos: `natureza` (`a_pagar` \| `a_receber`), `descricao`, `origem` (`cliente` 
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/comissoes` | Lista paginada. Filtros: `busca`, `status`, `viagemId`. |
+| GET | `/comissoes` | Lista paginada. Filtros: `busca`, `status`, `viagemId`. Cada item traz a origem: `viagem: { id, destino, clienteNome }`. |
 | POST | `/comissoes` | Cria comissão. |
 | PUT | `/comissoes/:id` | Atualiza comissão. |
 | DELETE | `/comissoes/:id` | Remove comissão. |
@@ -236,7 +236,7 @@ revisa antes de salvar.
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/vendas` | Lista paginada. Filtros: `busca`, `tipo` (retorna vendas com ao menos um item desse tipo), `status`, `clienteId`. |
-| GET | `/vendas/:id` | Detalhe, incluindo `itens[]` e `numeroPedidoExtras[]`. |
+| GET | `/vendas/:id` | Detalhe (resumo da venda), incluindo `itens[]` (com `fornecedorNome`), `numeroPedidoExtras[]`, `cliente` e `viagem?`. |
 | POST | `/vendas` | Cria venda vinculada a `clienteId`, com um ou mais `itens`. **`numeroPedido` é gerado pelo backend** (`PED-000123`, sequencial). |
 | PUT | `/vendas/:id` | Atualiza venda (substitui `itens` por completo quando enviado). |
 | DELETE | `/vendas/:id` | Remove venda. |

@@ -29,7 +29,7 @@ import {
   origemPagamentoLabel,
 } from "@/lib/constants";
 import { formatCurrency, formatDate, formatHorarioVoo } from "@/lib/format";
-import type { StatusConta, StatusViagem, VooTrecho } from "@/types/entities";
+import type { ContaFinanceira, Pagamento, StatusConta, StatusViagem, VooTrecho } from "@/types/entities";
 
 const STATUS_VIAGEM_TONE: Record<StatusViagem, StatusTone> = {
   orcamento: "neutral",
@@ -178,47 +178,9 @@ export function ViagemResumo({ viagemId, acoes = true }: ViagemResumoProps) {
         )}
       </Secao>
 
-      <Secao titulo="Pagamentos" icone={Banknote}>
-        {resumo.pagamentos.length === 0 ? (
-          <Vazio>Nenhum pagamento registrado.</Vazio>
-        ) : (
-          <Tabela
-            cabecalho={["Data", "Fornecedor", "Forma", "Origem", "Parcelas", "Valor"]}
-            alinharUltimaDireita
-            linhas={resumo.pagamentos.map((p) => [
-              formatDate(p.dataPagamento),
-              p.fornecedor,
-              FORMA_PAGAMENTO_LABEL[p.formaPagamento],
-              p.tipoCartao === "terceiro" && p.nomeTitularTerceiro
-                ? `${origemPagamentoLabel(p.formaPagamento, p.tipoCartao)} (${p.nomeTitularTerceiro})`
-                : origemPagamentoLabel(p.formaPagamento, p.tipoCartao),
-              p.parcelas > 1 ? `${p.parcelas}x` : "À vista",
-              formatCurrency(p.valor),
-            ])}
-          />
-        )}
-      </Secao>
+      <PagamentosSecao pagamentos={resumo.pagamentos} />
 
-      <Secao titulo="Contas" icone={CalendarDays}>
-        {resumo.contas.length === 0 ? (
-          <Vazio>Nenhuma conta vinculada.</Vazio>
-        ) : (
-          <Tabela
-            cabecalho={["Vencimento", "Descrição", "Tipo", "Status", "Valor"]}
-            alinharUltimaDireita
-            linhas={resumo.contas.map((c) => [
-              formatDate(c.vencimento),
-              <span key="d">
-                {c.descricao}
-                {c.observacoes && <span className="block text-xs text-muted-foreground">{c.observacoes}</span>}
-              </span>,
-              NATUREZA_CONTA_LABEL[c.natureza],
-              <StatusBadge key="s" tone={STATUS_CONTA_TONE[c.status]} label={STATUS_CONTA_LABEL[c.status]} />,
-              formatCurrency(c.valor),
-            ])}
-          />
-        )}
-      </Secao>
+      <ContasSecao contas={resumo.contas} />
 
       {(resumo.comissoes.length > 0 || resumo.reembolsos.length > 0) && (
         <div className="grid gap-6 sm:grid-cols-2">
@@ -263,7 +225,57 @@ export function ViagemResumo({ viagemId, acoes = true }: ViagemResumoProps) {
   );
 }
 
-function Totais({ totais }: { totais: { totalVendido: number; pagoFornecedores: number; recebido: number; aReceber: number; comissao: number } }) {
+export function PagamentosSecao({ pagamentos }: { pagamentos: Pagamento[] }) {
+  return (
+    <Secao titulo="Pagamentos" icone={Banknote}>
+      {pagamentos.length === 0 ? (
+        <Vazio>Nenhum pagamento registrado.</Vazio>
+      ) : (
+        <Tabela
+          cabecalho={["Data", "Fornecedor", "Forma", "Origem", "Parcelas", "Valor"]}
+          alinharUltimaDireita
+          linhas={pagamentos.map((p) => [
+            formatDate(p.dataPagamento),
+            p.fornecedor,
+            FORMA_PAGAMENTO_LABEL[p.formaPagamento],
+            p.tipoCartao === "terceiro" && p.nomeTitularTerceiro
+              ? `${origemPagamentoLabel(p.formaPagamento, p.tipoCartao)} (${p.nomeTitularTerceiro})`
+              : origemPagamentoLabel(p.formaPagamento, p.tipoCartao),
+            p.parcelas > 1 ? `${p.parcelas}x` : "À vista",
+            formatCurrency(p.valor),
+          ])}
+        />
+      )}
+    </Secao>
+  );
+}
+
+export function ContasSecao({ contas }: { contas: ContaFinanceira[] }) {
+  return (
+    <Secao titulo="Contas" icone={CalendarDays}>
+      {contas.length === 0 ? (
+        <Vazio>Nenhuma conta vinculada.</Vazio>
+      ) : (
+        <Tabela
+          cabecalho={["Vencimento", "Descrição", "Tipo", "Status", "Valor"]}
+          alinharUltimaDireita
+          linhas={contas.map((c) => [
+            formatDate(c.vencimento),
+            <span key="d">
+              {c.descricao}
+              {c.observacoes && <span className="block text-xs text-muted-foreground">{c.observacoes}</span>}
+            </span>,
+            NATUREZA_CONTA_LABEL[c.natureza],
+            <StatusBadge key="s" tone={STATUS_CONTA_TONE[c.status]} label={STATUS_CONTA_LABEL[c.status]} />,
+            formatCurrency(c.valor),
+          ])}
+        />
+      )}
+    </Secao>
+  );
+}
+
+export function Totais({ totais }: { totais: { totalVendido: number; pagoFornecedores: number; recebido: number; aReceber: number; comissao: number } }) {
   const itens = [
     { label: "Total vendido", valor: totais.totalVendido },
     { label: "Recebido do cliente", valor: totais.recebido },
@@ -366,7 +378,7 @@ function Ponto({
   );
 }
 
-function Secao({
+export function Secao({
   titulo,
   icone: Icone,
   children,
@@ -386,11 +398,11 @@ function Secao({
   );
 }
 
-function Vazio({ children }: { children: React.ReactNode }) {
+export function Vazio({ children }: { children: React.ReactNode }) {
   return <p className="text-muted-foreground">{children}</p>;
 }
 
-function Tabela({
+export function Tabela({
   cabecalho,
   linhas,
   alinharUltimaDireita,

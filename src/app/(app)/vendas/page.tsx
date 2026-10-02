@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { vendaColumns } from "@/components/vendas/venda-columns";
 import { VendaForm } from "@/components/vendas/venda-form";
+import { VendaResumo } from "@/components/vendas/venda-resumo";
 import {
   useAtualizarVenda,
   useCriarVenda,
@@ -36,6 +38,7 @@ export default function VendasPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editando, setEditando] = useState<Venda | null>(null);
   const [removendo, setRemovendo] = useState<Venda | null>(null);
+  const [visualizando, setVisualizando] = useState<Venda | null>(null);
   const buscaDebounced = useDebounce(busca);
 
   const { data, isLoading, isPlaceholderData } = useVendas({
@@ -95,10 +98,43 @@ export default function VendasPage() {
         pageCount={data?.totalPaginas ?? 0}
         totalItems={data?.total ?? 0}
         onPageChange={setPageIndex}
-        onRowClick={(venda) => { setEditando(venda); setFormOpen(true); }}
+        onRowClick={setVisualizando}
         emptyTitle="Nenhuma venda cadastrada"
         emptyDescription="Cadastre viagens, passeios, aluguel de carro e outras vendas da agência."
       />
+
+      <Sheet open={Boolean(visualizando)} onOpenChange={(open) => !open && setVisualizando(null)}>
+        <SheetContent className="overflow-y-auto sm:max-w-3xl">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Resumo da venda</SheetTitle>
+          </SheetHeader>
+          {visualizando && (
+            <div className="mt-2 space-y-6">
+              <VendaResumo vendaId={visualizando.id} />
+              <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setRemovendo(visualizando)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remover
+                </Button>
+                <Button
+                  onClick={() => {
+                    setEditando(visualizando);
+                    setVisualizando(null);
+                    setFormOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar venda
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="overflow-y-auto sm:max-h-[85vh] sm:max-w-2xl">
@@ -143,6 +179,7 @@ export default function VendasPage() {
             onSuccess: () => {
               setRemovendo(null);
               setFormOpen(false);
+              setVisualizando(null);
             },
           });
         }}

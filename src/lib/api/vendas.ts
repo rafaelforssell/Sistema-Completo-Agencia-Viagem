@@ -3,6 +3,7 @@ import type {
   PaginatedResponse,
   PaginationParams,
   Venda,
+  VendaDetalhe,
   VendaInput,
 } from "@/types/entities";
 
@@ -14,7 +15,7 @@ export interface VendasFiltro extends PaginationParams {
 
 export const vendasApi = {
   listar: (params?: VendasFiltro) => http.get<PaginatedResponse<Venda>>("/vendas", params),
-  detalhe: (id: string) => http.get<Venda>(`/vendas/${id}`),
+  detalhe: (id: string) => http.get<VendaDetalhe>(`/vendas/${id}`),
   criar: (input: VendaInput) => http.post<Venda>("/vendas", input),
   atualizar: (id: string, input: Partial<VendaInput>) => http.put<Venda>(`/vendas/${id}`, input),
   remover: (id: string) => http.delete<void>(`/vendas/${id}`),

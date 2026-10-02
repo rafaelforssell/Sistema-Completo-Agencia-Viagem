@@ -6,6 +6,8 @@ import { HttpError } from "../../lib/http-error";
 import { asyncHandler } from "../../middleware/async-handler";
 import { parsePagination, paginatedResponse } from "../../utils/pagination";
 import { toNumber } from "../../utils/decimal";
+import { serializeCliente } from "../clientes/clientes.routes";
+import { serializeViagem } from "../viagens/viagens.routes";
 
 const TIPO_VENDA = [
   "viagem",
@@ -136,10 +138,24 @@ vendasRouter.get(
   asyncHandler(async (req, res) => {
     const venda = await prisma.venda.findUnique({
       where: { id: req.params.id },
-      include: { numeroPedidoExtras: true, itens: true },
+      include: {
+        numeroPedidoExtras: true,
+        itens: { include: { fornecedor: true } },
+        cliente: true,
+        viagem: true,
+      },
     });
     if (!venda) throw HttpError.notFound("Venda não encontrada.");
-    res.json(serializeVenda(venda));
+
+    // Detalhe usado no resumo da venda: além dos dados da venda, traz o
+    // cliente, a viagem vinculada e o nome do fornecedor de cada item.
+    const serializada = serializeVenda(venda);
+    res.json({
+      ...serializada,
+      itens: serializada.itens.map((item, i) => ({ ...item, fornecedorNome: venda.itens[i].fornecedor?.nome })),
+      cliente: serializeCliente(venda.cliente),
+      viagem: venda.viagem ? serializeViagem(venda.viagem) : undefined,
+    });
   })
 );
 

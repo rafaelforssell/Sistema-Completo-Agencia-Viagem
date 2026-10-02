@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { comissaoColumns } from "@/components/comissoes/comissao-columns";
 import { ComissaoForm } from "@/components/comissoes/comissao-form";
+import { ComissaoResumo } from "@/components/comissoes/comissao-resumo";
 import {
   useAtualizarComissao,
   useComissoes,
@@ -36,6 +38,7 @@ export default function ComissoesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editando, setEditando] = useState<Comissao | null>(null);
   const [removendo, setRemovendo] = useState<Comissao | null>(null);
+  const [visualizando, setVisualizando] = useState<Comissao | null>(null);
   const buscaDebounced = useDebounce(busca);
 
   const { data, isLoading, isPlaceholderData } = useComissoes({
@@ -95,10 +98,43 @@ export default function ComissoesPage() {
         pageCount={data?.totalPaginas ?? 0}
         totalItems={data?.total ?? 0}
         onPageChange={setPageIndex}
-        onRowClick={(comissao) => { setEditando(comissao); setFormOpen(true); }}
+        onRowClick={setVisualizando}
         emptyTitle="Nenhuma comissão cadastrada"
         emptyDescription="Cadastre comissões vinculadas a viagens e fornecedores."
       />
+
+      <Sheet open={Boolean(visualizando)} onOpenChange={(open) => !open && setVisualizando(null)}>
+        <SheetContent className="overflow-y-auto sm:max-w-2xl">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Resumo da comissão</SheetTitle>
+          </SheetHeader>
+          {visualizando && (
+            <div className="mt-2 space-y-6">
+              <ComissaoResumo comissao={visualizando} />
+              <div className="flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+                <Button
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setRemovendo(visualizando)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remover
+                </Button>
+                <Button
+                  onClick={() => {
+                    setEditando(visualizando);
+                    setVisualizando(null);
+                    setFormOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar comissão
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-xl">
@@ -143,6 +179,7 @@ export default function ComissoesPage() {
             onSuccess: () => {
               setRemovendo(null);
               setFormOpen(false);
+              setVisualizando(null);
             },
           });
         }}

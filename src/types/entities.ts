@@ -279,9 +279,11 @@ export interface Comissao extends Timestamps {
   status: StatusComissao;
   dataPrevista?: string;
   dataRecebimento?: string;
+  // Origem — só na listagem (GET /comissoes).
+  viagem?: { id: ID; destino: string; clienteNome: string };
 }
 
-export type ComissaoInput = Omit<Comissao, "id" | "criadoEm" | "atualizadoEm">;
+export type ComissaoInput = Omit<Comissao, "id" | "criadoEm" | "atualizadoEm" | "viagem">;
 
 // ---------- Fornecedores ----------
 
@@ -394,6 +396,13 @@ export interface Venda extends Timestamps {
   itens: VendaItem[];
   valorTotal: number;
   numeroPedidoExtras: NumeroPedidoExtra[];
+}
+
+// GET /vendas/:id — a venda com cliente, viagem e nome dos fornecedores.
+export interface VendaDetalhe extends Omit<Venda, "itens"> {
+  itens: (VendaItem & { fornecedorNome?: string })[];
+  cliente: Cliente;
+  viagem?: Viagem;
 }
 
 export type VendaInput = Omit<
