@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { EmptyState } from "@/components/common/empty-state";
 import { StatusBadge } from "@/components/common/status-badge";
@@ -28,6 +29,14 @@ import {
 import { formatDate } from "@/lib/format";
 import { tarefaCrmSchema, type TarefaCrmFormValues } from "@/lib/schemas/crm";
 import { cn } from "@/lib/utils";
+
+type FiltroTarefas = "pendentes" | "realizadas" | "todas";
+
+const FILTROS: { value: FiltroTarefas; label: string }[] = [
+  { value: "pendentes", label: "Pendentes" },
+  { value: "realizadas", label: "Realizadas" },
+  { value: "todas", label: "Todas" },
+];
 
 function isAtrasada(dataVencimento: string, concluida: boolean) {
   if (concluida) return false;
@@ -93,6 +102,16 @@ export function TarefaList() {
   const atualizar = useAtualizarTarefaCrm();
   const remover = useRemoverTarefaCrm();
   const [removendoId, setRemovendoId] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState<FiltroTarefas>("pendentes");
+
+  const contagem: Record<FiltroTarefas, number> = {
+    pendentes: (tarefas ?? []).filter((t) => !t.concluida).length,
+    realizadas: (tarefas ?? []).filter((t) => t.concluida).length,
+    todas: (tarefas ?? []).length,
+  };
+  const visiveis = (tarefas ?? []).filter((t) =>
+    filtro === "todas" ? true : filtro === "realizadas" ? t.concluida : !t.concluida
+  );
 
   return (
     <div className="space-y-4">
@@ -102,13 +121,30 @@ export function TarefaList() {
         </CardContent>
       </Card>
 
+      <Tabs value={filtro} onValueChange={(v) => setFiltro(v as FiltroTarefas)}>
+        <TabsList>
+          {FILTROS.map((opcao) => (
+            <TabsTrigger key={opcao.value} value={opcao.value} className="gap-1.5">
+              {opcao.label}
+              <span className="text-xs text-muted-foreground">{contagem[opcao.value]}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando tarefas...</p>
       ) : !tarefas || tarefas.length === 0 ? (
         <EmptyState icon={CheckSquare} title="Nenhuma tarefa cadastrada" description="Crie lembretes de follow-up com cliente ou lead." />
+      ) : visiveis.length === 0 ? (
+        <EmptyState
+          icon={CheckSquare}
+          title={filtro === "realizadas" ? "Nenhuma tarefa realizada" : "Nenhuma tarefa pendente"}
+          description={filtro === "realizadas" ? "Marque uma tarefa como feita e ela aparece aqui." : "Tudo em dia por aqui."}
+        />
       ) : (
         <div className="space-y-1.5">
-          {tarefas.map((tarefa) => {
+          {visiveis.map((tarefa) => {
             const atrasada = isAtrasada(tarefa.dataVencimento, tarefa.concluida);
             return (
               <div
