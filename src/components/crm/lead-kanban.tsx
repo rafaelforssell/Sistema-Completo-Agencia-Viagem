@@ -10,7 +10,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
@@ -51,9 +51,11 @@ function LeadCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
       )}
     >
       <p className="font-medium">{lead.nome}</p>
-      {lead.origem && <p className="text-xs text-muted-foreground">{lead.origem}</p>}
       {lead.valorEstimado !== undefined && lead.valorEstimado > 0 && (
-        <p className="mt-1 text-xs font-medium text-primary">{formatCurrency(lead.valorEstimado)}</p>
+        <p className="text-xs font-medium text-primary">{formatCurrency(lead.valorEstimado)}</p>
+      )}
+      {lead.observacoes && (
+        <p className="mt-1 line-clamp-3 whitespace-pre-line text-xs text-muted-foreground">{lead.observacoes}</p>
       )}
     </div>
   );
@@ -93,15 +95,31 @@ function KanbanColumn({
   );
 }
 
-export function LeadKanban() {
+// O botão "Novo lead" fica na linha das abas (página do CRM), pra o funil
+// começar logo abaixo delas; a página avisa por `novoLead`.
+export function LeadKanban({
+  novoLead,
+  onNovoLeadChange,
+}: {
+  novoLead: boolean;
+  onNovoLeadChange: (aberto: boolean) => void;
+}) {
   const { data, isLoading } = useLeads({ porPagina: 200 });
   const atualizarEtapa = useAtualizarEtapaLead();
   const criar = useCriarLead();
   const atualizar = useAtualizarLead();
   const remover = useRemoverLead();
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [editandoAberto, setEditandoAberto] = useState(false);
   const [editando, setEditando] = useState<Lead | null>(null);
+  const formOpen = novoLead || editandoAberto;
+  function setFormOpen(aberto: boolean) {
+    if (!aberto) {
+      onNovoLeadChange(false);
+      setEditandoAberto(false);
+    }
+  }
+  const leadAberto = novoLead ? null : editando;
   const [removendo, setRemovendo] = useState<Lead | null>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -123,26 +141,20 @@ export function LeadKanban() {
   if (leads.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="flex justify-end">
-          <Button onClick={() => { setEditando(null); setFormOpen(true); }}>
-            <Plus className="h-4 w-4" />
-            Novo lead
-          </Button>
-        </div>
         <EmptyState icon={Users} title="Nenhum lead ainda" description="Cadastre o primeiro lead do funil de vendas." />
         <LeadFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}
-          lead={editando}
+          lead={leadAberto}
           isSubmitting={criar.isPending || atualizar.isPending}
           onSubmit={(values) => {
-            if (editando) {
-              atualizar.mutate({ id: editando.id, input: values }, { onSuccess: () => setFormOpen(false) });
+            if (leadAberto) {
+              atualizar.mutate({ id: leadAberto.id, input: values }, { onSuccess: () => setFormOpen(false) });
             } else {
               criar.mutate(values, { onSuccess: () => setFormOpen(false) });
             }
           }}
-          onDelete={() => setRemovendo(editando)}
+          onDelete={() => setRemovendo(leadAberto)}
         />
       </div>
     );
@@ -150,13 +162,6 @@ export function LeadKanban() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={() => { setEditando(null); setFormOpen(true); }}>
-          <Plus className="h-4 w-4" />
-          Novo lead
-        </Button>
-      </div>
-
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {ETAPA_LEAD_OPTIONS.map((option) => (
@@ -165,7 +170,10 @@ export function LeadKanban() {
               etapa={option.value}
               label={option.label}
               leads={leads.filter((lead) => lead.etapa === option.value)}
-              onCardClick={(lead) => { setEditando(lead); setFormOpen(true); }}
+              onCardClick={(lead) => {
+                setEditando(lead);
+                setEditandoAberto(true);
+              }}
             />
           ))}
         </div>
@@ -174,16 +182,16 @@ export function LeadKanban() {
       <LeadFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
-        lead={editando}
+        lead={leadAberto}
         isSubmitting={criar.isPending || atualizar.isPending}
         onSubmit={(values) => {
-          if (editando) {
-            atualizar.mutate({ id: editando.id, input: values }, { onSuccess: () => setFormOpen(false) });
+          if (leadAberto) {
+            atualizar.mutate({ id: leadAberto.id, input: values }, { onSuccess: () => setFormOpen(false) });
           } else {
             criar.mutate(values, { onSuccess: () => setFormOpen(false) });
           }
         }}
-        onDelete={() => setRemovendo(editando)}
+        onDelete={() => setRemovendo(leadAberto)}
       />
 
       <ConfirmDialog

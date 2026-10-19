@@ -13,7 +13,6 @@ export function useInteracoesCrm(params: InteracoesFiltro) {
   return useQuery({
     queryKey: interacoesCrmKeys.lista(params),
     queryFn: () => interacoesCrmApi.listar(params),
-    enabled: Boolean(params.leadId || params.clienteId),
   });
 }
 

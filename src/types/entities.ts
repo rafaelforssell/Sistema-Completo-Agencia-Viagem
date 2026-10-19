@@ -437,6 +437,8 @@ export interface InteracaoCrm extends Timestamps {
   id: ID;
   leadId?: ID;
   clienteId?: ID;
+  // Nome do lead ou cliente (só na listagem).
+  nome?: string;
   tipo: TipoInteracaoCrm;
   descricao: string;
   data: string;

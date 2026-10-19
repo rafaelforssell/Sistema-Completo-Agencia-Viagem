@@ -18,11 +18,17 @@ const interacaoSchema = z
     path: ["leadId"],
   });
 
-function serializeInteracao(interacao: InteracaoCrm) {
+type InteracaoComNomes = InteracaoCrm & { lead?: { nome: string } | null; cliente?: { nome: string } | null };
+
+const comNomes = { lead: { select: { nome: true } }, cliente: { select: { nome: true } } } as const;
+
+function serializeInteracao(interacao: InteracaoComNomes) {
   return {
     id: interacao.id,
     leadId: interacao.leadId ?? undefined,
     clienteId: interacao.clienteId ?? undefined,
+    // Nome de quem a interação é, pra timeline geral (sem filtro).
+    nome: interacao.lead?.nome ?? interacao.cliente?.nome,
     tipo: interacao.tipo,
     descricao: interacao.descricao,
     data: interacao.data.toISOString(),
@@ -38,13 +44,13 @@ interacoesCrmRouter.get(
   asyncHandler(async (req, res) => {
     const leadId = typeof req.query.leadId === "string" ? req.query.leadId : undefined;
     const clienteId = typeof req.query.clienteId === "string" ? req.query.clienteId : undefined;
-    if (!leadId && !clienteId) {
-      throw HttpError.badRequest("Informe leadId ou clienteId.");
-    }
 
+    // Sem filtro: timeline geral, com as interações mais recentes de todos.
     const interacoes = await prisma.interacaoCrm.findMany({
       where: { leadId, clienteId },
-      orderBy: { data: "desc" },
+      include: comNomes,
+      orderBy: [{ data: "desc" }, { criadoEm: "desc" }],
+      take: leadId || clienteId ? undefined : 200,
     });
 
     res.json(interacoes.map(serializeInteracao));
@@ -63,6 +69,7 @@ interacoesCrmRouter.post(
         descricao: input.descricao,
         data: new Date(input.data),
       },
+      include: comNomes,
     });
     res.status(201).json(serializeInteracao(interacao));
   })

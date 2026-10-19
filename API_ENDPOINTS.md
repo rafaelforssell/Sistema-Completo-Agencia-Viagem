@@ -277,7 +277,7 @@ Campos: `nome`, `email?`, `telefone?`, `origem?`, `etapa` (`novo` \| `contato` \
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/crm/interacoes` | Filtros (um obrigatório): `leadId` ou `clienteId`. Sem paginação. |
+| GET | `/crm/interacoes` | Filtros opcionais: `leadId` ou `clienteId`. Sem filtro, devolve as 200 interações mais recentes (timeline geral). Cada interação traz `nome` (do lead ou cliente). Sem paginação. |
 | POST | `/crm/interacoes` | Cria interação vinculada a `leadId` OU `clienteId` (exatamente um). |
 | DELETE | `/crm/interacoes/:id` | Remove interação. |
 
