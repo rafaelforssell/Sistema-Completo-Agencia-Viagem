@@ -5,7 +5,7 @@ import { ApiError } from "@/lib/http";
 
 export function useBuscarVoo() {
   return useMutation({
-    mutationFn: (numero: string) => integracoesApi.buscarVoo(numero),
+    mutationFn: ({ numero, data }: { numero: string; data: string }) => integracoesApi.buscarVoo(numero, data),
     onError: (error: ApiError) => toast.error(error.message),
   });
 }

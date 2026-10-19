@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 import { ChevronDown, Loader2, PlaneLanding, PlaneTakeoff, Plus, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -72,24 +73,41 @@ export function TrechosFields({ form }: { form: UseFormReturn<ViagemFormValues> 
   function buscar(index: number) {
     const numero = form.getValues(`trechos.${index}.numeroVoo`)?.trim();
     if (!numero) return;
+    // A busca é por número + data de partida: usa a data já preenchida no
+    // trecho ou, se ainda não tem, a data de ida/volta da viagem.
+    const trecho = form.getValues(`trechos.${index}`);
+    const data =
+      trecho.partidaPrevista?.slice(0, 10) ||
+      (trecho.sentido === "ida" ? form.getValues("dataIda") : form.getValues("dataVolta"));
+    if (!data) {
+      toast.error("Informe a data da viagem (ou a partida do voo) antes de buscar.");
+      return;
+    }
     setBuscandoIndex(index);
-    buscarVoo.mutate(numero, {
-      onSuccess: (dados) => {
-        const opcoes = { shouldDirty: true };
-        form.setValue(`trechos.${index}.numeroVoo`, dados.voo.iata, opcoes);
-        form.setValue(`trechos.${index}.companhia`, dados.companhia.nome, opcoes);
-        form.setValue(`trechos.${index}.origemIata`, dados.partida.iata, opcoes);
-        form.setValue(`trechos.${index}.origemAeroporto`, dados.partida.aeroporto, opcoes);
-        form.setValue(`trechos.${index}.destinoIata`, dados.chegada.iata, opcoes);
-        form.setValue(`trechos.${index}.destinoAeroporto`, dados.chegada.aeroporto, opcoes);
-        form.setValue(`trechos.${index}.partidaPrevista`, dados.partida.horarioPrevisto?.slice(0, 16) ?? "", opcoes);
-        form.setValue(`trechos.${index}.chegadaPrevista`, dados.chegada.horarioPrevisto?.slice(0, 16) ?? "", opcoes);
-        form.setValue(`trechos.${index}.terminalPartida`, dados.partida.terminal ?? "", opcoes);
-        form.setValue(`trechos.${index}.terminalChegada`, dados.chegada.terminal ?? "", opcoes);
-        form.setValue(`trechos.${index}.aeronave`, dados.aeronave?.tipoIata ?? "", opcoes);
+    buscarVoo.mutate(
+      { numero, data },
+      {
+        onSuccess: (dados) => {
+          const opcoes = { shouldDirty: true };
+          form.setValue(`trechos.${index}.numeroVoo`, dados.voo.iata, opcoes);
+          form.setValue(`trechos.${index}.companhia`, dados.companhia.nome, opcoes);
+          form.setValue(`trechos.${index}.origemIata`, dados.partida.iata, opcoes);
+          form.setValue(`trechos.${index}.origemAeroporto`, dados.partida.aeroporto, opcoes);
+          form.setValue(`trechos.${index}.destinoIata`, dados.chegada.iata, opcoes);
+          form.setValue(`trechos.${index}.destinoAeroporto`, dados.chegada.aeroporto, opcoes);
+          form.setValue(`trechos.${index}.partidaPrevista`, dados.partida.horarioPrevisto ?? "", opcoes);
+          form.setValue(`trechos.${index}.chegadaPrevista`, dados.chegada.horarioPrevisto ?? "", opcoes);
+          form.setValue(`trechos.${index}.terminalPartida`, dados.partida.terminal ?? "", opcoes);
+          form.setValue(`trechos.${index}.terminalChegada`, dados.chegada.terminal ?? "", opcoes);
+          form.setValue(`trechos.${index}.aeronave`, dados.aeronave?.modelo ?? "", opcoes);
+          toast.success(
+            `${dados.voo.numero}: ${dados.partida.iata} → ${dados.chegada.iata}` +
+              (dados.voo.codeshare ? " (codeshare — operado por outra cia)" : ""),
+          );
+        },
+        onSettled: () => setBuscandoIndex(null),
       },
-      onSettled: () => setBuscandoIndex(null),
-    });
+    );
   }
 
   function grupo(sentido: SentidoTrecho) {

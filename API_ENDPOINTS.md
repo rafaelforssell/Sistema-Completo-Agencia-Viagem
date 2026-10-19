@@ -214,18 +214,15 @@ devem ser criados/removidos direto por aqui (ver seção Reembolsos).
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/integracoes/voo/:numero` | Busca dados de um voo pelo número (ex.: `LA3400`) via Aviationstack. Requer `AVIATIONSTACK_API_KEY` configurada no backend — sem ela, responde 400 com mensagem explicando. |
+| GET | `/integracoes/voo/:numero?data=AAAA-MM-DD` | Busca um voo pelo número (ex.: `LA3400`) e data de partida (local) via AeroDataBox (RapidAPI). `data` é obrigatória. Requer `AERODATABOX_API_KEY` no backend — sem ela, responde 400 com mensagem explicando. 404 quando não há esse voo nessa data. |
 
-Resposta: além do resumo usado pra pré-preencher a viagem (`numeroVoo`, `companhiaAerea`,
-`aeroportoOrigem`, `aeroportoDestino`, `dataIda`, `horarioPartida`, `horarioChegada`),
-inclui todo o detalhe que a Aviationstack retorna, só pra exibição/conferência
-(não é salvo na viagem): `status` (`scheduled` \| `active` \| `landed` \|
-`cancelled` \| `incident` \| `diverted`), `companhia` (`{ nome, iata?, icao? }`),
-`voo` (`{ numero, iata, icao? }`), `aeronave?` (`{ registro?, tipoIata?, tipoIcao? }`),
-`partida`/`chegada` (`{ aeroporto, iata, icao?, terminal?, portao?, bagagem?,
-atrasoMinutos?, horarioPrevisto, horarioEstimado?, horarioReal? }`), e
-`posicaoAtual?` (posição/altitude/velocidade em tempo real, só quando o voo está
-no ar — no plano gratuito costuma vir vazio).
+Resposta (não é salva na viagem, só pré-preenche o trecho): `status` (status da
+AeroDataBox: `Expected`, `Departed`, `Arrived`, `Canceled`, ...), `companhia`
+(`{ nome, iata?, icao? }`), `voo` (`{ numero, iata, codeshare }`), `aeronave?`
+(`{ registro?, modelo? }`) e `partida`/`chegada` (`{ aeroporto, cidade?, iata,
+icao?, terminal?, portao?, bagagem?, atrasoMinutos?, horarioPrevisto?,
+horarioEstimado? }`). Os horários vêm como `AAAA-MM-DDTHH:mm` na hora local de
+cada aeroporto (a hora do bilhete).
 
 Usado em cada trecho de voo do formulário de viagem pra pré-preencher companhia,
 aeroportos, horários e terminais a partir do número do voo — o usuário sempre

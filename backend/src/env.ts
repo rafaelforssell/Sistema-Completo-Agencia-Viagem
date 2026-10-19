@@ -30,5 +30,5 @@ export const env = {
   // Opcional: busca de dados de voo por número (ver módulo integracoes/voo).
   // Sem essa chave, o endpoint /integracoes/voo continua existindo mas
   // responde com erro pedindo pra configurar.
-  aviationstackApiKey: process.env.AVIATIONSTACK_API_KEY,
+  aerodataboxApiKey: process.env.AERODATABOX_API_KEY,
 };

@@ -2,48 +2,30 @@ import { http } from "@/lib/http";
 
 export interface PontoVoo {
   aeroporto: string;
+  cidade?: string;
   iata: string;
   icao?: string;
   terminal?: string;
   portao?: string;
   bagagem?: string;
   atrasoMinutos?: number;
-  horarioPrevisto: string;
+  // Hora local do aeroporto, "AAAA-MM-DDTHH:mm" (a hora do bilhete).
+  horarioPrevisto?: string;
   horarioEstimado?: string;
-  horarioReal?: string;
 }
 
-export interface PosicaoAtualVoo {
-  atualizadoEm: string;
-  latitude: number;
-  longitude: number;
-  altitude: number;
-  direcao: number;
-  velocidadeHorizontalKmh: number;
-  velocidadeVerticalKmh: number;
-  noSolo: boolean;
-}
-
+// GET /integracoes/voo/:numero?data= — dados do voo via AeroDataBox, usados
+// pra pré-preencher um trecho da viagem.
 export interface DadosVoo {
-  // Resumo usado pra pré-preencher o formulário de viagem.
-  numeroVoo: string;
-  companhiaAerea: string;
-  aeroportoOrigem: string;
-  aeroportoDestino: string;
-  dataIda: string;
-  horarioPartida: string;
-  horarioChegada: string;
-
-  // Detalhe completo retornado pela Aviationstack, só pra conferência.
   status: string;
   companhia: { nome: string; iata?: string; icao?: string };
-  voo: { numero: string; iata: string; icao?: string };
-  aeronave?: { registro?: string; tipoIata?: string; tipoIcao?: string };
+  voo: { numero: string; iata: string; codeshare: boolean };
+  aeronave?: { registro?: string; modelo?: string };
   partida: PontoVoo;
   chegada: PontoVoo;
-  posicaoAtual?: PosicaoAtualVoo;
 }
 
 export const integracoesApi = {
-  buscarVoo: (numero: string) => http.get<DadosVoo>(`/integracoes/voo/${encodeURIComponent(numero)}`),
+  buscarVoo: (numero: string, data: string) =>
+    http.get<DadosVoo>(`/integracoes/voo/${encodeURIComponent(numero)}?data=${encodeURIComponent(data)}`),
 };

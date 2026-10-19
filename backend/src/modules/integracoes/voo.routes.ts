@@ -3,63 +3,72 @@ import { env } from "../../env";
 import { HttpError } from "../../lib/http-error";
 import { asyncHandler } from "../../middleware/async-handler";
 
-// O plano gratuito da Aviationstack só aceita chamadas HTTP (não HTTPS) —
-// limitação deles, não nossa. Ver docs.apilayer.com/aviationstack.
-const AVIATIONSTACK_BASE_URL = "http://api.aviationstack.com/v1/flights";
+// AeroDataBox via RapidAPI (aerodatabox.com). Diferente da Aviationstack
+// gratuita (que só conhecia os voos do dia), ela busca voo por número + data,
+// inclusive datas futuras, e devolve o horário local de cada aeroporto.
+const AERODATABOX_HOST = "aerodatabox.p.rapidapi.com";
 
-interface AviationstackPonto {
-  airport: string;
-  timezone?: string;
-  iata: string;
-  icao?: string;
-  terminal?: string | null;
-  gate?: string | null;
-  baggage?: string | null;
-  delay?: number | null;
-  scheduled: string;
-  estimated?: string | null;
-  actual?: string | null;
-  estimated_runway?: string | null;
-  actual_runway?: string | null;
+interface AeroDataBoxHorario {
+  utc: string; // "2026-11-20 13:05Z"
+  local: string; // "2026-11-20 10:05-03:00"
 }
 
-interface AviationstackFlight {
-  flight_date: string;
-  flight_status: string;
-  departure: AviationstackPonto;
-  arrival: AviationstackPonto;
-  airline: { name: string; iata?: string; icao?: string };
-  flight: { number: string; iata: string; icao?: string; codeshared?: unknown };
-  aircraft?: { registration?: string | null; iata?: string | null; icao?: string | null; icao24?: string | null } | null;
-  live?: {
-    updated: string;
-    latitude: number;
-    longitude: number;
-    altitude: number;
-    direction: number;
-    speed_horizontal: number;
-    speed_vertical: number;
-    is_ground: boolean;
-  } | null;
+interface AeroDataBoxPonto {
+  airport: {
+    name: string;
+    shortName?: string;
+    municipalityName?: string;
+    iata?: string;
+    icao?: string;
+    countryCode?: string;
+    timeZone?: string;
+  };
+  scheduledTime?: AeroDataBoxHorario;
+  revisedTime?: AeroDataBoxHorario; // horário atualizado (perto do voo)
+  predictedTime?: AeroDataBoxHorario; // previsão estatística
+  runwayTime?: AeroDataBoxHorario;
+  terminal?: string;
+  checkInDesk?: string;
+  gate?: string;
+  baggageBelt?: string;
 }
 
-interface AviationstackResponse {
-  data?: AviationstackFlight[];
-  error?: { code: number; type: string; info: string };
+interface AeroDataBoxVoo {
+  number: string; // "LA 3400"
+  status: string;
+  codeshareStatus?: "IsOperator" | "IsCodeshared" | "Unknown";
+  departure: AeroDataBoxPonto;
+  arrival: AeroDataBoxPonto;
+  airline?: { name: string; iata?: string; icao?: string };
+  aircraft?: { reg?: string; modeS?: string; model?: string };
 }
 
-function serializePonto(ponto: AviationstackPonto) {
+// "2026-11-20 10:05-03:00" → "2026-11-20T10:05": a hora do bilhete, no fuso do
+// aeroporto, que é como os trechos são salvos.
+function horaLocal(horario?: AeroDataBoxHorario) {
+  return horario?.local ? horario.local.slice(0, 16).replace(" ", "T") : undefined;
+}
+
+function minutosDeAtraso(ponto: AeroDataBoxPonto) {
+  const estimado = ponto.revisedTime ?? ponto.predictedTime;
+  if (!ponto.scheduledTime?.utc || !estimado?.utc) return undefined;
+  const diff = Date.parse(estimado.utc.replace(" ", "T")) - Date.parse(ponto.scheduledTime.utc.replace(" ", "T"));
+  return Number.isNaN(diff) ? undefined : Math.round(diff / 60000);
+}
+
+function serializePonto(ponto: AeroDataBoxPonto) {
   return {
-    aeroporto: ponto.airport,
-    iata: ponto.iata,
-    icao: ponto.icao ?? undefined,
-    terminal: ponto.terminal ?? undefined,
-    portao: ponto.gate ?? undefined,
-    bagagem: ponto.baggage ?? undefined,
-    atrasoMinutos: ponto.delay ?? undefined,
-    horarioPrevisto: ponto.scheduled,
-    horarioEstimado: ponto.estimated ?? undefined,
-    horarioReal: ponto.actual ?? undefined,
+    // "São Paulo Guarulhos - Governador André Franco Montoro" → "São Paulo Guarulhos"
+    aeroporto: ponto.airport.name.split(" - ")[0],
+    cidade: ponto.airport.municipalityName,
+    iata: ponto.airport.iata ?? "",
+    icao: ponto.airport.icao,
+    terminal: ponto.terminal,
+    portao: ponto.gate,
+    bagagem: ponto.baggageBelt,
+    atrasoMinutos: minutosDeAtraso(ponto),
+    horarioPrevisto: horaLocal(ponto.scheduledTime),
+    horarioEstimado: horaLocal(ponto.revisedTime ?? ponto.predictedTime),
   };
 }
 
@@ -68,71 +77,63 @@ export const voosRouter = Router();
 voosRouter.get(
   "/:numero",
   asyncHandler(async (req, res) => {
-    if (!env.aviationstackApiKey) {
+    if (!env.aerodataboxApiKey) {
       throw HttpError.badRequest(
-        "Busca por número de voo não está configurada. Peça para o administrador definir AVIATIONSTACK_API_KEY."
+        "Busca por número de voo não está configurada. Peça para o administrador definir AERODATABOX_API_KEY."
       );
     }
 
-    const numero = req.params.numero.trim().toUpperCase();
-    const url = `${AVIATIONSTACK_BASE_URL}?access_key=${env.aviationstackApiKey}&flight_iata=${encodeURIComponent(numero)}`;
-
-    const response = await fetch(url);
-    const body = (await response.json()) as AviationstackResponse;
-
-    if (body.error) {
-      throw HttpError.badRequest(`Aviationstack: ${body.error.info}`);
+    const numero = req.params.numero.replace(/\s+/g, "").toUpperCase();
+    const data = typeof req.query.data === "string" ? req.query.data.slice(0, 10) : "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      throw HttpError.badRequest("Informe a data do voo (horário de partida ou data da viagem) para buscar.");
     }
 
-    const voo = body.data?.[0];
+    const url =
+      `https://${AERODATABOX_HOST}/flights/number/${encodeURIComponent(numero)}/${data}` +
+      "?withAircraftImage=false&withLocation=false&dateLocalRole=Departure";
+    const response = await fetch(url, {
+      headers: { "X-RapidAPI-Key": env.aerodataboxApiKey, "X-RapidAPI-Host": AERODATABOX_HOST },
+    });
+
+    if (response.status === 204 || response.status === 404) {
+      throw HttpError.notFound(`Nenhum voo ${numero} encontrado partindo em ${data.split("-").reverse().join("/")}.`);
+    }
+    if (response.status === 401 || response.status === 403) {
+      throw HttpError.badRequest("AeroDataBox recusou a chave (AERODATABOX_API_KEY inválida ou sem assinatura).");
+    }
+    if (response.status === 429) {
+      throw HttpError.badRequest("Limite de buscas da AeroDataBox atingido. Tente de novo mais tarde.");
+    }
+    if (!response.ok) {
+      throw HttpError.badRequest(`AeroDataBox respondeu com erro (${response.status}). Tente de novo.`);
+    }
+
+    const voos = (await response.json()) as AeroDataBoxVoo[];
+    // Um mesmo número pode ter vários trechos no dia (voo com escala). Fica com
+    // o primeiro a partir, que é o que o cliente normalmente embarca.
+    const voo = [...voos].sort((a, b) =>
+      (a.departure.scheduledTime?.utc ?? "").localeCompare(b.departure.scheduledTime?.utc ?? "")
+    )[0];
     if (!voo) {
-      throw HttpError.notFound(`Nenhum voo encontrado para o número "${numero}".`);
+      throw HttpError.notFound(`Nenhum voo ${numero} encontrado partindo em ${data.split("-").reverse().join("/")}.`);
     }
 
     res.json({
-      // Campos resumidos, usados pra pré-preencher o formulário de viagem.
-      numeroVoo: voo.flight.iata,
-      companhiaAerea: voo.airline.name,
-      aeroportoOrigem: voo.departure.airport,
-      aeroportoDestino: voo.arrival.airport,
-      dataIda: voo.departure.scheduled?.slice(0, 10),
-      horarioPartida: voo.departure.scheduled,
-      horarioChegada: voo.arrival.scheduled,
-
-      // Tudo que a Aviationstack retorna, pra exibir como conferência —
-      // não é salvo na viagem, só mostrado na tela de busca.
-      status: voo.flight_status,
+      status: voo.status,
       companhia: {
-        nome: voo.airline.name,
-        iata: voo.airline.iata ?? undefined,
-        icao: voo.airline.icao ?? undefined,
+        nome: voo.airline?.name ?? "",
+        iata: voo.airline?.iata,
+        icao: voo.airline?.icao,
       },
       voo: {
-        numero: voo.flight.number,
-        iata: voo.flight.iata,
-        icao: voo.flight.icao ?? undefined,
+        numero: voo.number,
+        iata: voo.number.replace(/\s+/g, ""),
+        codeshare: voo.codeshareStatus === "IsCodeshared",
       },
-      aeronave: voo.aircraft
-        ? {
-            registro: voo.aircraft.registration ?? undefined,
-            tipoIata: voo.aircraft.iata ?? undefined,
-            tipoIcao: voo.aircraft.icao ?? undefined,
-          }
-        : undefined,
+      aeronave: voo.aircraft ? { registro: voo.aircraft.reg, modelo: voo.aircraft.model } : undefined,
       partida: serializePonto(voo.departure),
       chegada: serializePonto(voo.arrival),
-      posicaoAtual: voo.live
-        ? {
-            atualizadoEm: voo.live.updated,
-            latitude: voo.live.latitude,
-            longitude: voo.live.longitude,
-            altitude: voo.live.altitude,
-            direcao: voo.live.direction,
-            velocidadeHorizontalKmh: voo.live.speed_horizontal,
-            velocidadeVerticalKmh: voo.live.speed_vertical,
-            noSolo: voo.live.is_ground,
-          }
-        : undefined,
     });
   })
 );
