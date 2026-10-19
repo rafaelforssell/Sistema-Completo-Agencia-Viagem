@@ -54,8 +54,11 @@ interface ViagemFormProps {
 // Etapas do cadastro de uma viagem nova. Cada uma ocupa a tela inteira e só
 // os campos dela são validados ao avançar.
 const ETAPAS = [
-  { id: "dados", titulo: "Dados", campos: ["clienteId", "destino", "status", "localizador"] },
-  { id: "voos", titulo: "Voos", campos: ["trechos", "dataIda", "dataVolta", "companhiaAerea"] },
+  {
+    id: "viagem",
+    titulo: "Viagem e voos",
+    campos: ["clienteId", "destino", "status", "localizador", "dataIda", "dataVolta", "companhiaAerea", "trechos"],
+  },
   { id: "passageiros", titulo: "Passageiros", campos: ["incluirCliente", "passageiros"] },
   { id: "venda", titulo: "Venda", campos: ["dataVenda", "itens", "numeroPedidoExtras", "vendaObservacoes"] },
   { id: "revisao", titulo: "Comissão e revisão", campos: ["comissaoValor", "comissaoFornecedor", "observacoes"] },
@@ -217,12 +220,12 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
 
   const secaoDados = (
     <Secao titulo="Dados da viagem">
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
         <FormField
           control={form.control}
           name="clienteId"
           render={({ field }) => (
-            <FormItem className="sm:col-span-2">
+            <FormItem className="sm:col-span-2 lg:col-span-3">
               <FormLabel>Cliente principal</FormLabel>
               <FormControl>
                 {clienteFixo ? (
@@ -239,10 +242,49 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
           control={form.control}
           name="destino"
           render={({ field }) => (
-            <FormItem className="sm:col-span-2">
+            <FormItem className="sm:col-span-2 lg:col-span-3">
               <FormLabel>Destino</FormLabel>
               <FormControl>
                 <Input placeholder="Lisboa, Portugal" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="dataIda"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data de ida</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="dataVolta"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Data de volta</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="companhiaAerea"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-2">
+              <FormLabel>Companhia aérea</FormLabel>
+              <FormControl>
+                <Input placeholder="TAP, LATAM..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -289,55 +331,7 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
     </Secao>
   );
 
-  const secaoVoos = (
-    <div className="space-y-5">
-      <TrechosFields form={form} />
-      <div className="grid gap-5 sm:grid-cols-3">
-        <FormField
-          control={form.control}
-          name="dataIda"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Data de ida</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="dataVolta"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Data de volta</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="companhiaAerea"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Companhia aérea</FormLabel>
-              <FormControl>
-                <Input placeholder="TAP, LATAM..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Datas e companhia são preenchidas automaticamente a partir dos voos — dá para ajustar à mão.
-      </p>
-    </div>
-  );
+  const secaoVoos = <TrechosFields form={form} />;
 
   const secaoVenda = (
     <Secao titulo="O que o cliente fechou?" descricao="A venda é criada junto com a viagem e aparece em Vendas.">
@@ -461,11 +455,15 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
         <Etapas atual={etapa} maxima={etapaMaxima} onSelecionar={setEtapa} />
 
         <div className="min-h-[50vh]">
-          {etapa === 0 && secaoDados}
-          {etapa === 1 && secaoVoos}
-          {etapa === 2 && <PassageirosFields form={form} nomeCliente={nomeCliente} />}
-          {etapa === 3 && secaoVenda}
-          {etapa === 4 && (
+          {etapa === 0 && (
+            <div className="space-y-8">
+              {secaoDados}
+              {secaoVoos}
+            </div>
+          )}
+          {etapa === 1 && <PassageirosFields form={form} nomeCliente={nomeCliente} />}
+          {etapa === 2 && secaoVenda}
+          {etapa === 3 && (
             <div className="space-y-6">
               <div className="grid gap-6 lg:grid-cols-2">
                 {secaoComissao}
