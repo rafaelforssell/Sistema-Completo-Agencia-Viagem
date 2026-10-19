@@ -23,6 +23,12 @@ export interface VendaItensShape {
   numeroPedidoExtras?: { numero: string; descricao?: string }[];
 }
 
+// Soma só os itens que entram no total — os marcados "fora do total" (ex.:
+// hotel já incluso no pacote) ficam de fora.
+export function somarItens(itens: Pick<VendaItemFormValues, "valor" | "foraDoTotal">[] | undefined) {
+  return (itens ?? []).reduce((soma, item) => (item?.foraDoTotal ? soma : soma + (Number(item?.valor) || 0)), 0);
+}
+
 export function VendaItensFields({
   form,
   titulo = "O que o cliente fechou?",
@@ -33,10 +39,7 @@ export function VendaItensFields({
   const itensArray = useFieldArray({ control: form.control, name: "itens" });
 
   const itensValues = form.watch("itens");
-  const valorTotal = useMemo(
-    () => (itensValues ?? []).reduce((soma, item) => soma + (Number(item?.valor) || 0), 0),
-    [itensValues],
-  );
+  const valorTotal = useMemo(() => somarItens(itensValues), [itensValues]);
   const tiposPresentes = new Set((itensValues ?? []).map((item) => item?.tipo));
 
   return (
@@ -61,6 +64,7 @@ export function VendaItensFields({
                 valor: 0,
                 dataAluguel: "",
                 seguroCompleto: false,
+                foraDoTotal: false,
               })
             }
           >
@@ -82,6 +86,21 @@ export function VendaItensFields({
                 <span className="text-sm font-medium">
                   {TIPO_VENDA_OPTIONS.find((o) => o.value === tipoItem)?.label}
                 </span>
+                <div className="flex items-center gap-3">
+                <FormField
+                  control={form.control}
+                  name={`itens.${index}.foraDoTotal`}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value ?? false} onCheckedChange={(v) => field.onChange(v === true)} />
+                      </FormControl>
+                      <FormLabel className="text-xs font-normal text-muted-foreground">
+                        Não somar ao total (já incluso)
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
                 <Button
                   type="button"
                   variant="ghost"
@@ -92,6 +111,7 @@ export function VendaItensFields({
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                </div>
               </div>
 
               {/* Fornecedor, valor e descrição na mesma linha em telas grandes,

@@ -24,6 +24,7 @@ import { TrechosFields } from "@/components/viagens/trechos-fields";
 import { Itinerario } from "@/components/viagens/viagem-resumo";
 import {
   NumerosPedidoExtrasFields,
+  somarItens,
   VendaItensFields,
   type VendaItensShape,
 } from "@/components/vendas/venda-itens-fields";
@@ -124,7 +125,7 @@ export function ViagemForm({ viagem, clienteFixo, onSubmit, isSubmitting, onCanc
       dataVenda: hojeISO(),
       vendaObservacoes: "",
       itens: criando
-        ? [{ tipo: "viagem", fornecedorId: "", descricao: "", valor: 0, dataAluguel: "", seguroCompleto: false }]
+        ? [{ tipo: "viagem", fornecedorId: "", descricao: "", valor: 0, dataAluguel: "", seguroCompleto: false, foraDoTotal: false }]
         : [],
       numeroPedidoExtras: [],
     },
@@ -572,7 +573,7 @@ function Revisao({
     ...(valores.incluirCliente && (clienteSelecionado || nomeCliente) ? [nomeCliente ?? ""] : []),
     ...valores.passageiros.map((p) => p.nome),
   ].filter(Boolean);
-  const total = valores.itens.reduce((soma, item) => soma + (Number(item.valor) || 0), 0);
+  const total = somarItens(valores.itens);
   // Horários do formulário ("AAAA-MM-DDTHH:mm") no formato salvo (UTC), pro
   // itinerário mostrar a hora do bilhete.
   const trechos = valores.trechos.map((t) => ({
@@ -615,7 +616,9 @@ function Revisao({
                   {TIPO_VENDA_LABEL[item.tipo]}
                   {item.descricao && <span className="text-muted-foreground"> · {item.descricao}</span>}
                 </span>
-                <span>{formatCurrency(Number(item.valor) || 0)}</span>
+                <span className={item.foraDoTotal ? "text-muted-foreground line-through" : undefined}>
+                  {formatCurrency(Number(item.valor) || 0)}
+                </span>
               </li>
             ))}
           </ul>

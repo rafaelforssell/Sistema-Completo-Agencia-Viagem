@@ -109,6 +109,7 @@ export function VendaResumo({ vendaId }: { vendaId: string }) {
             <span key="i">
               <span className="font-medium">{TIPO_VENDA_LABEL[item.tipo]}</span>
               {item.descricao && <span className="text-muted-foreground"> · {item.descricao}</span>}
+              {item.foraDoTotal && <span className="text-xs text-muted-foreground"> (incluso, fora do total)</span>}
               {item.tipo === "aluguel_carro" && (item.dataAluguel || item.seguroCompleto !== undefined) && (
                 <span className="block text-xs text-muted-foreground">
                   {item.dataAluguel && `Retirada em ${formatDate(item.dataAluguel)}`}
@@ -118,7 +119,9 @@ export function VendaResumo({ vendaId }: { vendaId: string }) {
               )}
             </span>,
             item.fornecedorNome || "—",
-            formatCurrency(item.valor),
+            <span key="v" className={item.foraDoTotal ? "text-muted-foreground line-through" : undefined}>
+              {formatCurrency(item.valor)}
+            </span>,
           ])}
         />
         {venda.numeroPedidoExtras.length > 0 && (

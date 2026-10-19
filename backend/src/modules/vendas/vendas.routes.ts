@@ -35,6 +35,7 @@ export const vendaItemSchema = z.object({
   valor: z.number().nonnegative(),
   dataAluguel: z.string().optional().or(z.literal("")),
   seguroCompleto: z.boolean().optional(),
+  foraDoTotal: z.boolean().optional(),
 });
 
 const vendaSchema = z.object({
@@ -58,6 +59,7 @@ export function serializeVenda(venda: VendaCompleta) {
     valor: toNumber(item.valor) ?? 0,
     dataAluguel: item.dataAluguel?.toISOString(),
     seguroCompleto: item.seguroCompleto ?? undefined,
+    foraDoTotal: item.foraDoTotal,
   }));
 
   return {
@@ -69,7 +71,7 @@ export function serializeVenda(venda: VendaCompleta) {
     numeroPedido: venda.numeroPedido,
     observacoes: venda.observacoes ?? undefined,
     itens,
-    valorTotal: itens.reduce((soma, item) => soma + item.valor, 0),
+    valorTotal: itens.reduce((soma, item) => (item.foraDoTotal ? soma : soma + item.valor), 0),
     numeroPedidoExtras: venda.numeroPedidoExtras.map((extra) => ({
       id: extra.id,
       numero: extra.numero,
@@ -88,6 +90,7 @@ export function toItemData(item: z.infer<typeof vendaItemSchema>) {
     valor: item.valor,
     dataAluguel: item.dataAluguel ? new Date(item.dataAluguel) : null,
     seguroCompleto: item.seguroCompleto ?? null,
+    foraDoTotal: item.foraDoTotal ?? false,
   };
 }
 

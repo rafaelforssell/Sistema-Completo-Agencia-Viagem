@@ -61,6 +61,7 @@ export function VendaForm({ venda, padrao, onSubmit, isSubmitting, onCancel }: V
         valor: item.valor,
         dataAluguel: item.dataAluguel?.slice(0, 10) ?? "",
         seguroCompleto: item.seguroCompleto ?? false,
+        foraDoTotal: item.foraDoTotal ?? false,
       })) ?? [],
     },
   });

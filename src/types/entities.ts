@@ -381,6 +381,8 @@ export interface VendaItem {
   valor: number;
   dataAluguel?: string;
   seguroCompleto?: boolean;
+  // Já incluso em outro item (ex.: no pacote) — não soma no valor total.
+  foraDoTotal?: boolean;
 }
 
 export interface Venda extends Timestamps {

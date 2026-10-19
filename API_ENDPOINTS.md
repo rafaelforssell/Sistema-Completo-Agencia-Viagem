@@ -244,7 +244,7 @@ revisa antes de salvar.
 Uma venda é um "carrinho": tem vários itens (ex.: hotel + aéreo + transfer no
 mesmo pedido), cada um com seu próprio tipo, fornecedor e valor. O valor total
 (`valorTotal`) é calculado pelo backend como a soma dos itens — não é um campo
-de entrada.
+de entrada. Itens com `foraDoTotal: true` não entram nessa soma.
 
 Campos da venda: `clienteId`, `viagemId?`, `status` (`orcamento` \| `confirmada` \|
 `cancelada`), `dataVenda`, `observacoes?`, `numeroPedidoExtras?` (array de
@@ -256,7 +256,9 @@ Campos de cada item (`itens[]`): `tipo` (`viagem` \| `aereo` \| `hotel` \|
 `ingressos` \| `outro`), `fornecedorId?` (fornecedor responsável por esse item
 específico — é assim que um pacote fechado com uma operadora pode ter um item
 de hotel apontando para o fornecedor do hotel), `descricao?`, `valor`,
-`dataAluguel?` e `seguroCompleto?` (só fazem sentido quando `tipo = aluguel_carro`).
+`dataAluguel?` e `seguroCompleto?` (só fazem sentido quando `tipo = aluguel_carro`),
+`foraDoTotal?` (padrão `false` — marca um item que já está incluso em outro,
+ex.: o hotel dentro do pacote; ele aparece na venda mas não soma no `valorTotal`).
 
 ## CRM
 

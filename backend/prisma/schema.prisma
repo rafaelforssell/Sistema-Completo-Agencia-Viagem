@@ -470,6 +470,9 @@ model VendaItem {
   valor          Decimal   @db.Decimal(12, 2)
   dataAluguel    DateTime?
   seguroCompleto Boolean?
+  // Item que já está incluso em outro (ex.: hotel dentro do pacote): aparece
+  // na venda, mas não soma no valor total.
+  foraDoTotal    Boolean   @default(false)
   criadoEm       DateTime  @default(now())
   atualizadoEm   DateTime  @updatedAt
 

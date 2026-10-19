@@ -157,13 +157,16 @@ export function ViagemResumo({ viagemId, acoes = true }: ViagemResumoProps) {
                 <span key="i">
                   <span className="font-medium">{TIPO_VENDA_LABEL[item.tipo]}</span>
                   {item.descricao && <span className="text-muted-foreground"> · {item.descricao}</span>}
+                  {item.foraDoTotal && <span className="text-xs text-muted-foreground"> (incluso, fora do total)</span>}
                   {item.statusVenda === "cancelada" && (
                     <span className="text-destructive"> ({STATUS_VENDA_LABEL.cancelada})</span>
                   )}
                 </span>,
                 item.fornecedorNome || "—",
                 item.numeroPedido,
-                formatCurrency(item.valor),
+                <span key="v" className={item.foraDoTotal ? "text-muted-foreground line-through" : undefined}>
+                  {formatCurrency(item.valor)}
+                </span>,
               ])}
             />
             {resumo.vendas.some((v) => v.numeroPedidoExtras.length > 0) && (

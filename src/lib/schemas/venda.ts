@@ -7,6 +7,7 @@ export const vendaItemSchema = z.object({
   valor: z.number().nonnegative("Informe um valor válido."),
   dataAluguel: z.string().optional().or(z.literal("")),
   seguroCompleto: z.boolean().optional(),
+  foraDoTotal: z.boolean().optional(),
 });
 
 export const vendaSchema = z.object({
